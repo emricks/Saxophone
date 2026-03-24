@@ -70,7 +70,6 @@ class MenuState:
                             self.selected_index = 0
                             self.render_menu()
 
-
                     elif item_type == "menu":
                         if "items" in selected_item and len(selected_item["items"]) > 0:
                             self.menu_stack.append(self.current_menu)

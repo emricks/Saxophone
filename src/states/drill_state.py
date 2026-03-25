@@ -43,17 +43,26 @@ class DrillState:
         self.ui_group.append(self.notes_label)
 
     async def run(self):
+        # START AUDIO: Press Concert Gb3 (Alto Sax written Eb4)
+        alto_eb_midi_note = 54
+        self.hw.play_note(alto_eb_midi_note)
+
         while self.is_running:
             event = self.hw.get_button_event()
 
             if event and event.pressed:
-                if event.key_number == self.hw.BTN_UP:  # UP
+                if event.key_number == self.hw.BTN_UP:
                     self.text_y -= 10
                     self.title_label.y = self.text_y
-                elif event.key_number == self.hw.BTN_DOWN:  # DOWN
+
+                elif event.key_number == self.hw.BTN_DOWN:
                     self.text_y += 10
                     self.title_label.y = self.text_y
-                elif event.key_number == self.hw.BTN_SELECT:  # SELECT (Exit)
+
+                elif event.key_number == self.hw.BTN_SELECT:
                     self.is_running = False
 
             await asyncio.sleep(0.01)
+
+        # STOP AUDIO: Release all notes right before exiting the loop
+        self.hw.stop_note()

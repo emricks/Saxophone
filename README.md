@@ -3,11 +3,11 @@
 A project to build a tool that provides fingering practice for the saxophone.
 
 ## Hardware Setup
-This code base runs on an Adafruit Feather RP2040
+This code base runs on an Adafruit Feather RP2040 PropMaker
 TODO
 
 ## Installation
-After plugging in the Feather, you must ensure CircuitPython is installed following the [documentation](https://learn.adafruit.com/adafruit-feather-rp2040-pico/circuitpython).
+After plugging in the Feather, you must ensure CircuitPython is installed following the [documentation](https://learn.adafruit.com/adafruit-rp2040-prop-maker-feather/circuitpython).
 
 A few libraries need to be copied to the device one time, into the 'lib' directory.
 These are installable using 'circup'. A convenience make target `make setup-device` will

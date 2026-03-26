@@ -10,6 +10,7 @@ class DrillState:
         self.drill_name = payload.get("name", "Unknown Drill")
         self.notes = payload.get("notes", [])
         self.is_running = True
+        self.current_note_playing = None
 
         self.ui_group = displayio.Group()
         self.hw.display.root_group = self.ui_group
@@ -43,26 +44,52 @@ class DrillState:
         self.ui_group.append(self.notes_label)
 
     async def run(self):
-        # START AUDIO: Press Concert Gb3 (Alto Sax written Eb4)
-        alto_eb_midi_note = 54
-        self.hw.play_note(alto_eb_midi_note)
+        # Fingering Dictionary: Maps button combos to MIDI notes
+        # UP (Bit 0) = 1
+        # SELECT (Bit 1) = 2
+        # DOWN (Bit 2) = 4
+        FINGERINGS = {
+            0: None,  # Nothing pressed = Silence
+            1: 54,  # UP only
+            4: 56,  # DOWN only
+            5: 58,  # UP + DOWN together (1 + 4 = 5)
+            # Add more combos here!
+        }
+
+        # Ensure we start in a known silent state
+        self.current_note_playing = None
+        self.hw.stop_note()
 
         while self.is_running:
-            event = self.hw.get_button_event()
+            # 1. Drain the event queue to keep our hardware tracking array 100% up to date
+            while self.hw.get_button_event():
+                pass
 
-            if event and event.pressed:
-                if event.key_number == self.hw.BTN_UP:
-                    self.text_y -= 10
-                    self.title_label.y = self.text_y
+                # 2. Build the bitmask based on the CURRENT physical state of the buttons
+            mask = 0
+            if self.hw.key_states[self.hw.BTN_UP]:     mask |= 1
+            if self.hw.key_states[self.hw.BTN_SELECT]: mask |= 2
+            if self.hw.key_states[self.hw.BTN_DOWN]:   mask |= 4
 
-                elif event.key_number == self.hw.BTN_DOWN:
-                    self.text_y += 10
-                    self.title_label.y = self.text_y
+            # (Optional) Secret exit combo: Press SELECT (2) by itself to quit
+            if mask == 2:
+                self.is_running = False
+                break
 
-                elif event.key_number == self.hw.BTN_SELECT:
-                    self.is_running = False
+            # 3. Look up the corresponding note for this specific fingering
+            target_note = FINGERINGS.get(mask, None)
 
+            # 4. If the fingering changed, update the audio!
+            if target_note != self.current_note_playing:
+                self.hw.stop_note()  # Always cut the old note off first
+
+                if target_note is not None:
+                    self.hw.play_note(target_note)
+
+                self.current_note_playing = target_note
+
+            self.hw.display.refresh()
             await asyncio.sleep(0.01)
 
-        # STOP AUDIO: Release all notes right before exiting the loop
+        # STOP AUDIO: Release notes before exiting the loop
         self.hw.stop_note()

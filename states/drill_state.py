@@ -3,6 +3,8 @@ import displayio
 import terminalio
 from adafruit_display_text import label
 
+from hardware.buttons import Buttons
+
 
 class DrillState:
     def __init__(self, hardware, payload):
@@ -44,47 +46,30 @@ class DrillState:
         self.ui_group.append(self.notes_label)
 
     async def run(self):
-        # Fingering Dictionary: Maps button combos to MIDI notes
-        # UP (Bit 0) = 1
-        # SELECT (Bit 1) = 2
-        # DOWN (Bit 2) = 4
-        FINGERINGS = {
-            0: None,  # Nothing pressed = Silence
-            1: 54,  # UP only
-            4: 56,  # DOWN only
-            5: 58,  # UP + DOWN together (1 + 4 = 5)
-            # Add more combos here!
-        }
-
-        # Ensure we start in a known silent state
         self.current_note_playing = None
         self.hw.stop_note()
 
         while self.is_running:
-            # 1. Drain the event queue to keep our hardware tracking array 100% up to date
-            while self.hw.get_button_event():
-                pass
+            self.hw.update_button_states()
 
-                # 2. Build the bitmask based on the CURRENT physical state of the buttons
-            mask = 0
-            if self.hw.key_states[self.hw.BTN_UP]:     mask |= 1
-            if self.hw.key_states[self.hw.BTN_SELECT]: mask |= 2
-            if self.hw.key_states[self.hw.BTN_DOWN]:   mask |= 4
-
-            # (Optional) Secret exit combo: Press SELECT (2) by itself to quit
-            if mask == 2:
+            if Buttons.BTN_SELECT.is_pressed:
                 self.is_running = False
                 break
 
-            # 3. Look up the corresponding note for this specific fingering
-            target_note = FINGERINGS.get(mask, None)
+            # 2. Handle Note Logic
+            target_note = self.hw.get_current_note()
 
-            # 4. If the fingering changed, update the audio!
+            if target_note is None:
+                self.hw.stop_note()
+                self.current_note_playing = None
+                continue
+
+            # 3. Apply changes if the note changed
             if target_note != self.current_note_playing:
-                self.hw.stop_note()  # Always cut the old note off first
+                self.hw.stop_note()
 
                 if target_note is not None:
-                    self.hw.play_note(target_note)
+                    self.hw.play_note(target_note.midi_number)
 
                 self.current_note_playing = target_note
 

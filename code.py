@@ -1,11 +1,15 @@
 # code.py
 import asyncio
-from hardware import SaxHardware
+import time
+from hardware.saxophone import SaxHardware
 from states.menu_state import MenuState
 from data.menu_config import MAIN_MENU
 
 
 async def main():
+    # Add a delay before initializing anything so the serial console can connect
+    time.sleep(5)
+    
     # Initialize hardware abstraction
     hw = SaxHardware()
 

@@ -1,4 +1,4 @@
-# hardware.py
+# saxophone.py
 import array
 import board
 import busio
@@ -10,6 +10,10 @@ import keypad
 import audiobusio
 import synthio
 import audiomixer
+from adafruit_mcp230xx.mcp23017 import MCP23017
+
+from hardware.buttons import ButtonHardwareSource, Buttons
+from data.notes import note_from_mask
 
 
 class SaxHardware:
@@ -37,7 +41,7 @@ class SaxHardware:
         self.audio_enable.direction = digitalio.Direction.OUTPUT
         self.audio_enable.value = True
 
-        # 2. Setup the I2S Bus
+        # 2. Set up the I2S Bus
         self.audio = audiobusio.I2SOut(
             bit_clock=board.I2S_BIT_CLOCK,
             word_select=board.I2S_WORD_SELECT,
@@ -72,23 +76,30 @@ class SaxHardware:
         )
 
         # 7. The Tone (Waveform)
-        self.sax_waveform = self.load_wav_buffer("data/audio/AKWF_altosax_0001.wav")
+        self.sax_waveform = self.load_wav_buffer("../data/audio/AKWF_altosax_0001.wav")
 
-        # --- Navigation Buttons ---
-        # Wiring: Connect buttons from these pins to GND
-        self.nav_pins = (board.D11, board.D13, board.D12)
+        # --- Buttons ---
+        # --- I2C MCP23017 Setup ---
+        self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
+        self.mcp = MCP23017(self.i2c)
 
-        # 2. Dynamically assign the logical roles based on the pin's actual position
-        self.BTN_UP = self.nav_pins.index(board.D11)
-        self.BTN_SELECT = self.nav_pins.index(board.D13)
-        self.BTN_DOWN = self.nav_pins.index(board.D12)
+        self.onboard_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.ONBOARD]
+        self.mcp_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP]
 
-        self.keys = keypad.Keys(self.nav_pins, value_when_pressed=False, pull=True)
-        self.key_states = [False] * len(self.nav_pins)
+        # Initialize the pins for buttons managed by MCP GPIO
+        for btn in self.mcp_buttons:
+            pin = self.mcp.get_pin(btn.hw_pin)
+            pin.direction = digitalio.Direction.INPUT
+            pin.pull = digitalio.Pull.UP
+
+        # initialize the pins for buttons managed by onboard GPIO
+        onboard_pins = tuple(btn.hw_pin for btn in self.onboard_buttons)
+        # keypad library manages our onboard_pins
+        self.onboard_button_keys = keypad.Keys(onboard_pins, value_when_pressed=False, pull=True)
 
     def stop_note(self):
-            """Releases all active notes to trigger the fade-out envelope."""
-            self.synth.release_all()
+        """Releases all active notes to trigger the fade-out envelope."""
+        self.synth.release_all()
 
     def play_note(self, midi_number):
         """Converts a MIDI integer to Hertz and plays it with the sax waveform."""
@@ -115,10 +126,30 @@ class SaxHardware:
             print(f"Failed to load {filename}: {e}")
             return None
 
-    def get_button_event(self):
-        """Returns the next event and updates the live key states."""
-        event = self.keys.events.get()
-        if event:
-            # Update our live tracking array (True if held, False if released)
-            self.key_states[event.key_number] = event.pressed
-        return event
+    def update_button_states(self):
+        """Updates the unified button_states array with both onboard and I2C pins."""
+        # process onboard GPIO from the keypad library to set key states
+        while True:
+            event = self.onboard_button_keys.events.get()
+            if not event:
+                break
+            # translate keypad event to the name of the button and update our button state
+            button_def = self.onboard_buttons[event.key_number]
+            button_def.is_pressed = event.pressed
+
+        # Poll the MCP GPIO and set button states
+        mcp_register = self.mcp.gpio
+        for btn in self.mcp_buttons:
+            # If the bit is 0, it is pulled to ground (pressed)
+            btn.is_pressed = not (mcp_register & (1 << btn.hw_pin))
+
+    def get_fingering_mask(self):
+        """Builds the mask from all currently pressed buttons that have a fingering_bit."""
+        mask = 0
+        for btn in Buttons.ALL:
+            if btn.fingering_bit is not None and btn.is_pressed:
+                mask |= (1 << btn.fingering_bit)
+        return mask
+
+    def get_current_note(self):
+        return note_from_mask(self.get_fingering_mask())

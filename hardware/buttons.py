@@ -31,12 +31,12 @@ class Buttons:
 
     # Right hand
     R_F_SHARP = ButtonDef(ButtonHardwareSource.ONBOARD, board.D13, fingering_bit=4)
-    R_HIGH_F_SHARP = ButtonDef(ButtonHardwareSource.MCP, 0, fingering_bit=0)
+    R_HIGH_F_SHARP = ButtonDef(ButtonHardwareSource.MCP, 0, fingering_bit=3)
     R_C = ButtonDef(ButtonHardwareSource.ONBOARD, board.D11, fingering_bit=6)
-    R_E = ButtonDef(ButtonHardwareSource.MCP, 1, fingering_bit=1)
-    R_1 = ButtonDef(ButtonHardwareSource.MCP, 2, fingering_bit=2)
-    R_2 = ButtonDef(ButtonHardwareSource.ONBOARD, board.D12, fingering_bit=5)
-    R_3 = ButtonDef(ButtonHardwareSource.MCP, 3, fingering_bit=3)
+    R_E = ButtonDef(ButtonHardwareSource.MCP, 1, fingering_bit=5)
+    R_1 = ButtonDef(ButtonHardwareSource.MCP, 2, fingering_bit=0)
+    R_2 = ButtonDef(ButtonHardwareSource.ONBOARD, board.D12, fingering_bit=1)
+    R_3 = ButtonDef(ButtonHardwareSource.MCP, 3, fingering_bit=2)
     R_B_FLAT = ButtonDef(ButtonHardwareSource.MCP, 4, fingering_bit=7)
     R_LOW_E_FLAT = ButtonDef(ButtonHardwareSource.MCP, 5, fingering_bit=8)
     R_LOW_C = ButtonDef(ButtonHardwareSource.MCP, 6, fingering_bit=9)

@@ -28,6 +28,8 @@ class ButtonDef:
 
 class Buttons:
     # official key names
+
+    # Right hand
     R_F_SHARP = ButtonDef(ButtonHardwareSource.ONBOARD, board.D13, fingering_bit=4)
     R_HIGH_F_SHARP = ButtonDef(ButtonHardwareSource.MCP, 0, fingering_bit=0)
     R_C = ButtonDef(ButtonHardwareSource.ONBOARD, board.D11, fingering_bit=6)
@@ -35,10 +37,25 @@ class Buttons:
     R_1 = ButtonDef(ButtonHardwareSource.MCP, 2, fingering_bit=2)
     R_2 = ButtonDef(ButtonHardwareSource.ONBOARD, board.D12, fingering_bit=5)
     R_3 = ButtonDef(ButtonHardwareSource.MCP, 3, fingering_bit=3)
-
-    #
     R_B_FLAT = ButtonDef(ButtonHardwareSource.MCP, 4, fingering_bit=7)
     R_LOW_E_FLAT = ButtonDef(ButtonHardwareSource.MCP, 5, fingering_bit=8)
     R_LOW_C = ButtonDef(ButtonHardwareSource.MCP, 6, fingering_bit=9)
+
+    # TODO: Left hand
+    # L_OCTAVE
+    # L_1
+    # L_2
+    # L_3
+    # L_FRONT_F
+    # L_B_FLAT
+    # L_D
+    # L_E_FLAT
+    # L_F
+    # L_G_SHARP
+    # L_LOW_C_SHARP
+    # L_LOW_B
+    # L_LOW_B_FLAT
+
+    # TODO: Add select button and possibly "play" button
 
     ALL = (R_F_SHARP, R_HIGH_F_SHARP, R_C, R_E, R_1, R_2, R_3, R_B_FLAT, R_LOW_E_FLAT, R_LOW_C)

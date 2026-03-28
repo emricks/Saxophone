@@ -155,6 +155,11 @@ class SaxHardware:
             # If the bit is 0, it is pulled to ground (pressed)
             btn.is_pressed = not (mcp_register & (1 << btn.hw_pin))
 
+        # DEBUG - print buttons just pressed
+        for btn in Buttons.ALL:
+            if btn.just_pressed:
+                print(f"Button on hardware {btn.hw_source} pin {btn.hw_pin} pressed")
+
     def get_fingering_mask(self):
         """Builds the mask from all currently pressed buttons that have a fingering_bit."""
         mask = 0

@@ -53,13 +53,13 @@ class MenuState:
         while True:
             self.hw.update_button_states()
 
-            if Buttons.RIGHT_INDEX.just_pressed:
+            if Buttons.R_1.just_pressed:
                 self.selected_index = (self.selected_index - 1) % len(self.current_menu["items"])
                 self.update_selection_ui()
-            elif Buttons.RIGHT_MIDDLE.just_pressed:
+            elif Buttons.R_2.just_pressed:
                 self.selected_index = (self.selected_index + 1) % len(self.current_menu["items"])
                 self.update_selection_ui()
-            elif Buttons.BTN_SELECT.just_pressed:
+            elif Buttons.R_3.just_pressed:
                 selected_item = self.current_menu["items"][self.selected_index]
                 item_type = selected_item.get("type")
 

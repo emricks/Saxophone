@@ -7,9 +7,6 @@ from data.menu_config import MAIN_MENU
 
 
 async def main():
-    # Add a delay before initializing anything so the serial console can connect
-    time.sleep(5)
-    
     # Initialize hardware abstraction
     hw = SaxHardware()
 

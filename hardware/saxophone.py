@@ -1,5 +1,6 @@
 # saxophone.py
 import array
+
 import board
 import busio
 import digitalio
@@ -20,7 +21,8 @@ class SaxHardware:
     def __init__(self):
         displayio.release_displays()
 
-        # --- Display Setup (Verified Working) ---
+        # --- Display Setup  ---
+        print("Initializing display...")
         self.spi = busio.SPI(clock=board.SCK, MOSI=board.MOSI)
         self.tft_cs = board.MISO
         self.tft_dc = board.RX
@@ -34,8 +36,9 @@ class SaxHardware:
             self.spi, command=self.tft_dc, chip_select=self.tft_cs, reset=self.tft_rst, baudrate=62500000
         )
         self.display = adafruit_ili9341.ILI9341(self.display_bus, width=320, height=240)
-
+        print("Display initialized!")
         # --- Audio Setup ---
+        print("Initializing audio...")
         # 1. Turn on the Prop-Maker's I2S Amplifier
         self.audio_enable = digitalio.DigitalInOut(board.EXTERNAL_POWER)
         self.audio_enable.direction = digitalio.Direction.OUTPUT
@@ -77,11 +80,13 @@ class SaxHardware:
 
         # 7. The Tone (Waveform)
         self.sax_waveform = self.load_wav_buffer("../data/audio/AKWF_altosax_0001.wav")
+        print("Audio initialized!")
 
         # --- Buttons ---
         # --- I2C MCP23017 Setup ---
-        self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
-        self.mcp = MCP23017(self.i2c)
+        print("Initializing MCP at address 0x27")
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+        self.mcp = MCP23017(self.i2c, address=0x27)
 
         self.onboard_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.ONBOARD]
         self.mcp_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP]
@@ -91,11 +96,14 @@ class SaxHardware:
             pin = self.mcp.get_pin(btn.hw_pin)
             pin.direction = digitalio.Direction.INPUT
             pin.pull = digitalio.Pull.UP
+        print("Initalized MCP")
 
         # initialize the pins for buttons managed by onboard GPIO
+        print("Initializing Onboard GPIO")
         onboard_pins = tuple(btn.hw_pin for btn in self.onboard_buttons)
         # keypad library manages our onboard_pins
         self.onboard_button_keys = keypad.Keys(onboard_pins, value_when_pressed=False, pull=True)
+        print("Initialized onboard GPIO")
 
     def stop_note(self):
         """Releases all active notes to trigger the fade-out envelope."""
@@ -128,7 +136,11 @@ class SaxHardware:
 
     def update_button_states(self):
         """Updates the unified button_states array with both onboard and I2C pins."""
-        # process onboard GPIO from the keypad library to set key states
+        # 1. Update the 'was_pressed' state for all buttons BEFORE polling new data
+        for btn in Buttons.ALL:
+            btn.was_pressed = btn.is_pressed
+
+        # 2. process onboard GPIO from the keypad library to set key states
         while True:
             event = self.onboard_button_keys.events.get()
             if not event:
@@ -137,7 +149,7 @@ class SaxHardware:
             button_def = self.onboard_buttons[event.key_number]
             button_def.is_pressed = event.pressed
 
-        # Poll the MCP GPIO and set button states
+        # 3. Poll the MCP GPIO and set button states
         mcp_register = self.mcp.gpio
         for btn in self.mcp_buttons:
             # If the bit is 0, it is pulled to ground (pressed)

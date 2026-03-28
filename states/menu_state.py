@@ -53,13 +53,13 @@ class MenuState:
         while True:
             self.hw.update_button_states()
 
-            if Buttons.RIGHT_INDEX.is_pressed:
+            if Buttons.RIGHT_INDEX.just_pressed:
                 self.selected_index = (self.selected_index - 1) % len(self.current_menu["items"])
                 self.update_selection_ui()
-            elif Buttons.RIGHT_MIDDLE.is_pressed:
+            elif Buttons.RIGHT_MIDDLE.just_pressed:
                 self.selected_index = (self.selected_index + 1) % len(self.current_menu["items"])
                 self.update_selection_ui()
-            elif Buttons.BTN_SELECT.is_pressed:
+            elif Buttons.BTN_SELECT.just_pressed:
                 selected_item = self.current_menu["items"][self.selected_index]
                 item_type = selected_item.get("type")
 
@@ -80,7 +80,7 @@ class MenuState:
 
                 elif item_type == "drill":
                     payload = selected_item.get("payload", {})
-                    from drill_state import DrillState
+                    from states.drill_state import DrillState
 
                     next_state = DrillState(self.hw, payload)
                     await next_state.run()

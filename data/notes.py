@@ -9,9 +9,12 @@ class Note:
 class Notes:
     G = Note(name="G", midi_number=67, fingerings={0b0001}, staff_y_coord=120)
     A = Note(name="A", midi_number=69, fingerings={0b0010}, staff_y_coord=110)
-    B = Note(name="B", midi_number=71, fingerings={0b0011}, staff_y_coord=100)
+    B = Note(name="B", midi_number=71, fingerings={0b0100}, staff_y_coord=100)
+    C = Note(name="C", midi_number=73, fingerings={0b1000}, staff_y_coord=100)
+    D = Note(name="D", midi_number=75, fingerings={0b1001}, staff_y_coord=100)
+    E = Note(name="E", midi_number=77, fingerings={0b1010}, staff_y_coord=100)
 
-    ALL = (G, A, B)
+    ALL = (G, A, B, C, D, E)
 
     # Build a reverse lookup dictionary for instant access: bitmask -> Note
     MASK_TO_NOTE = {}
@@ -22,4 +25,5 @@ class Notes:
 
 
 def note_from_mask(mask):
-    return Notes.MASK_TO_NOTE.get(mask, None)
+    note = Notes.MASK_TO_NOTE.get(mask, None)
+    return note

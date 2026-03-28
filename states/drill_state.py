@@ -52,7 +52,7 @@ class DrillState:
         while self.is_running:
             self.hw.update_button_states()
 
-            if Buttons.BTN_SELECT.is_pressed:
+            if Buttons.BTN_SELECT.just_pressed:
                 self.is_running = False
                 break
 

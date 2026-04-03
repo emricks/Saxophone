@@ -85,7 +85,11 @@ class MenuState:
                     next_state = DrillState(self.hw, payload)
                     await next_state.run()
                     self.hw.display.root_group = self.ui_group
-
+                elif item_type == "play":
+                    from states.play_state import PlayState
+                    next_state = PlayState(self.hw)
+                    await next_state.run()
+                    self.hw.display.root_group = self.ui_group
                 else:
                     print(f"Error: Unhandled menu type '{item_type}'")
 

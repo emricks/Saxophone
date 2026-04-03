@@ -40,5 +40,9 @@ MAIN_MENU = {
                 {"text": "< Back", "type": "back"}
             ]
         },
+        {
+            "text": "FREE PLAY",
+            "type": "play"
+        }
     ]
 }

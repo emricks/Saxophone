@@ -50,10 +50,10 @@ class PlayState:
         
         # Two copies of the staff side-by-side, centered vertically
         staff_y = (240 // 2) - (69 // 2) # Center vertically
-        staff_x_start = 60 # Start a bit in from the left
+        staff_x_start = 32 # Start a bit in from the left
         
         self.staff_1 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start, y=staff_y)
-        self.staff_2 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 69, y=staff_y)
+        self.staff_2 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 60, y=staff_y)
         self.staff_3 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
         
         self.ui_group.append(self.staff_1)
@@ -106,6 +106,16 @@ class PlayState:
         flat_palette.make_transparent(1)
         self.flat_sprite = displayio.TileGrid(flat_bitmap, pixel_shader=flat_palette, x=staff_x_start + 40, y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.flat_sprite)
+
+        # load chart
+        chart_bitmap, chart_palette = adafruit_imageload.load(
+            "data/img/sax_fingering_blank.png",
+            bitmap=displayio.Bitmap,
+            palette=displayio.Palette
+        )
+        chart_palette.make_transparent(1)
+        self.chart_sprite = displayio.TileGrid(chart_bitmap, pixel_shader=chart_palette, x=210, y=0)
+        self.ui_group.append(self.chart_sprite)
 
     async def hide_notes(self):
         # remove notes visually at/after notes stop playing

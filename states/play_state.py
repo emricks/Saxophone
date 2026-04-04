@@ -198,4 +198,3 @@ class PlayState:
 
         # STOP AUDIO: Release notes before exiting the loop
         self.hw.stop_note()
-        await self.hide_notes()

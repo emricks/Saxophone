@@ -1,4 +1,6 @@
 import asyncio
+import gc
+
 import displayio
 import terminalio
 from adafruit_display_text import label
@@ -89,6 +91,8 @@ class MenuState:
                     from states.play_state import PlayState
                     next_state = PlayState(self.hw)
                     await next_state.run()
+                    del next_state
+                    gc.collect()
                     self.hw.display.root_group = self.ui_group
                 else:
                     print(f"Error: Unhandled menu type '{item_type}'")

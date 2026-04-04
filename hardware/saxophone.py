@@ -18,6 +18,8 @@ from data.notes import note_from_mask
 
 
 class SaxHardware:
+    NOTE_RELEASE_TIME = 0.1
+
     def __init__(self):
         displayio.release_displays()
 
@@ -73,7 +75,7 @@ class SaxHardware:
         self.sax_envelope = synthio.Envelope(
             attack_time=0.1,  # 100ms fade-in
             decay_time=0.0,
-            release_time=0.15,  # 150ms fade-out
+            release_time=SaxHardware.NOTE_RELEASE_TIME,
             attack_level=1.0,
             sustain_level=1.0
         )

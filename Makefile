@@ -18,4 +18,4 @@ deps:
 
 setup-device: deps
 	@echo "Installing libraries to device"
-	circup install asyncio adafruit_display_text adafruit_ili9341 adafruit_mcp230xx adafruit_imageload
+	circup install asyncio bitmaptools adafruit_display_text adafruit_ili9341 adafruit_mcp230xx adafruit_imageload

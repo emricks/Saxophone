@@ -1,9 +1,9 @@
 import asyncio
+import bitmaptools
 import displayio
 import terminalio
 import adafruit_imageload
 from adafruit_display_text import label
-
 from data.notes import Accidental, Notes
 from hardware.buttons import Buttons
 from hardware.saxophone import SaxHardware
@@ -117,6 +117,17 @@ class PlayState:
         self.chart_sprite = displayio.TileGrid(chart_bitmap, pixel_shader=chart_palette, x=210, y=0)
         self.ui_group.append(self.chart_sprite)
 
+        self.blit_bitmap, blit_palette = adafruit_imageload.load(
+            "data/img/sax_fingering_blit.png",
+            bitmap=displayio.Bitmap,
+            palette=displayio.Palette
+        )
+        self.unblit_bitmap, unblit_palette = adafruit_imageload.load(
+            "data/img/sax_fingering_unblit.png",
+            bitmap=displayio.Bitmap,
+            palette=displayio.Palette
+        )
+
     async def hide_notes(self):
         # remove notes visually at/after notes stop playing
         await asyncio.sleep(SaxHardware.NOTE_RELEASE_TIME)
@@ -125,6 +136,23 @@ class PlayState:
         self.flat_sprite.y = PlayState.OFF_SCREEN_Y
         self.staff_3.y = PlayState.OFF_SCREEN_Y
 
+    def update_chart(self):
+        for button in Buttons.ALL:
+            if button.just_pressed and button.bounding_box is not None:
+                box = button.bounding_box
+                bitmaptools.blit(self.chart_sprite.bitmap, self.blit_bitmap, x=box.x0, y=box.y0, x1=0, y1=0,
+                                 x2=box.calculate_width(),
+                                 y2=box.calculate_height(),
+                                 skip_dest_index=1)
+            elif button.just_released and button.bounding_box is not None:
+                box = button.bounding_box
+                bitmaptools.blit(self.chart_sprite.bitmap, self.unblit_bitmap, x=box.x0, y=box.y0, x1=0, y1=0,
+                                 x2=box.calculate_width(),
+                                 y2=box.calculate_height(),
+                                 skip_dest_index=1)
+
+
+
     async def run(self):
         self.current_note_playing = None
         self.hw.stop_note()
@@ -132,6 +160,7 @@ class PlayState:
 
         while self.is_running:
             self.hw.update_button_states()
+            self.update_chart()
 
             if Buttons.R_B_FLAT.just_pressed:
                 self.is_running = False

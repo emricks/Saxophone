@@ -15,9 +15,9 @@ class Notes:
     C_4 = Note(name="C_4", midi_number=51, fingerings={0b1000000111}, staff_y_coord=140)
     D_4 = Note(name="D_4", midi_number=53, fingerings={0b0000000111}, staff_y_coord=130)
     E_FLAT_4 = Note(name="E_FLAT_4", midi_number=54, fingerings={0b0100000111}, staff_y_coord=120, accidental=Accidental.FLAT)
-    E_4 = Note(name="E_4", midi_number=55, fingerings={0b0000000011}, staff_y_coord=110)
-    F_4 = Note(name="F_4", midi_number=56, fingerings={0b0000000001}, staff_y_coord=100)
-    F_SHARP_4 = Note(name="F_4", midi_number=57, fingerings={0b0000000010,0b0000010001}, staff_y_coord=100, accidental=Accidental.SHARP)
+    E_4 = Note(name="E_4", midi_number=55, fingerings={0b0000000011}, staff_y_coord=120)
+    F_4 = Note(name="F_4", midi_number=56, fingerings={0b0000000001}, staff_y_coord=110)
+    F_SHARP_4 = Note(name="F_4", midi_number=57, fingerings={0b0000000010,0b0000010001}, staff_y_coord=110, accidental=Accidental.SHARP)
 
 
     ALL = (C_4, D_4, E_FLAT_4, E_4, F_4, F_SHARP_4)

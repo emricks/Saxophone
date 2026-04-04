@@ -73,7 +73,7 @@ class SaxHardware:
         self.sax_envelope = synthio.Envelope(
             attack_time=0.1,  # 100ms fade-in
             decay_time=0.0,
-            release_time=0.15,  # 150ms fade-out
+            release_time=0.0,
             attack_level=1.0,
             sustain_level=1.0
         )

@@ -41,16 +41,16 @@ class Buttons:
     # official key names
 
     # Right hand
-    R_F_SHARP = ButtonDef(ButtonHardwareSource.ONBOARD, board.D13, fingering_bit=4, bounding_box=BoundingBox(15, 176, 36, 186))
+    R_F_SHARP = ButtonDef(ButtonHardwareSource.MCP, 4, fingering_bit=4, bounding_box=BoundingBox(15, 176, 36, 186))
     R_HIGH_F_SHARP = ButtonDef(ButtonHardwareSource.MCP, 0, fingering_bit=3, bounding_box=BoundingBox(21, 145, 33, 170))
-    R_C = ButtonDef(ButtonHardwareSource.ONBOARD, board.D11, fingering_bit=6, bounding_box=BoundingBox(7, 124, 18, 136))
-    R_E = ButtonDef(ButtonHardwareSource.MCP, 1, fingering_bit=5, bounding_box=BoundingBox(7, 106, 18, 119))
-    R_1 = ButtonDef(ButtonHardwareSource.MCP, 2, fingering_bit=0, bounding_box=BoundingBox(40, 129, 60, 149))
-    R_2 = ButtonDef(ButtonHardwareSource.ONBOARD, board.D12, fingering_bit=1, bounding_box=BoundingBox(40, 158, 60, 178))
-    R_3 = ButtonDef(ButtonHardwareSource.MCP, 3, fingering_bit=2, bounding_box=BoundingBox(40, 188, 60, 207))
-    R_B_FLAT = ButtonDef(ButtonHardwareSource.MCP, 4, fingering_bit=7, bounding_box=BoundingBox(7, 141, 18, 158))
-    R_LOW_E_FLAT = ButtonDef(ButtonHardwareSource.MCP, 5, fingering_bit=8, bounding_box=BoundingBox(2, 199, 30, 215))
-    R_LOW_C = ButtonDef(ButtonHardwareSource.MCP, 6, fingering_bit=9, bounding_box=BoundingBox(2, 220, 32, 238))
+    R_C = ButtonDef(ButtonHardwareSource.MCP, 7, fingering_bit=6, bounding_box=BoundingBox(7, 124, 18, 136))
+    R_E = ButtonDef(ButtonHardwareSource.MCP, 9, fingering_bit=5, bounding_box=BoundingBox(7, 106, 18, 119))
+    R_1 = ButtonDef(ButtonHardwareSource.MCP, 6, fingering_bit=0, bounding_box=BoundingBox(40, 129, 60, 149))
+    R_2 = ButtonDef(ButtonHardwareSource.MCP, 8, fingering_bit=1, bounding_box=BoundingBox(40, 158, 60, 178))
+    R_3 = ButtonDef(ButtonHardwareSource.MCP, 1, fingering_bit=2, bounding_box=BoundingBox(40, 188, 60, 207))
+    R_B_FLAT = ButtonDef(ButtonHardwareSource.MCP, 5, fingering_bit=7, bounding_box=BoundingBox(7, 141, 18, 158))
+    R_LOW_E_FLAT = ButtonDef(ButtonHardwareSource.MCP, 3, fingering_bit=8, bounding_box=BoundingBox(2, 199, 30, 215))
+    R_LOW_C = ButtonDef(ButtonHardwareSource.MCP, 2, fingering_bit=9, bounding_box=BoundingBox(2, 220, 32, 238))
 
     # TODO: Left hand
     # L_OCTAVE

@@ -86,9 +86,9 @@ class SaxHardware:
 
         # --- Buttons ---
         # --- I2C MCP23017 Setup ---
-        print("Initializing MCP at address 0x27")
+        print("Initializing MCP0 at address 0x20")
         self.i2c = busio.I2C(board.SCL, board.SDA)
-        self.mcp = MCP23017(self.i2c, address=0x27)
+        self.mcp = MCP23017(self.i2c, address=0x20)
 
         self.onboard_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.ONBOARD]
         self.mcp_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP]

@@ -18,9 +18,9 @@ class Notes:
     E_4 = Note(name="E_4", midi_number=55, fingerings={0b0000000011}, staff_y_coord=120)
     F_4 = Note(name="F_4", midi_number=56, fingerings={0b0000000001}, staff_y_coord=110)
     F_SHARP_4 = Note(name="F_4", midi_number=57, fingerings={0b0000000010,0b0000010001}, staff_y_coord=110, accidental=Accidental.SHARP)
+    G_4 = Note(name="G_4", midi_number=58, fingerings={0b0000000000}, staff_y_coord=100)
 
-
-    ALL = (C_4, D_4, E_FLAT_4, E_4, F_4, F_SHARP_4)
+    ALL = (C_4, D_4, E_FLAT_4, E_4, F_4, F_SHARP_4, G_4)
     # Build a reverse lookup dictionary for instant access: bitmask -> Note
     MASK_TO_NOTE = {}
 

@@ -1,6 +1,5 @@
 # saxophone.py
 import array
-
 import board
 import busio
 import digitalio
@@ -13,6 +12,7 @@ import synthio
 import audiomixer
 from adafruit_mcp230xx.mcp23017 import MCP23017
 
+from hardware.breath import BreathSensor
 from hardware.buttons import ButtonHardwareSource, Buttons
 from data.notes import note_from_mask
 
@@ -86,9 +86,9 @@ class SaxHardware:
 
         # --- Buttons ---
         # --- I2C MCP23017 Setup ---
-        print("Initializing MCP at address 0x27")
+        print("Initializing MCP0 at address 0x20")
         self.i2c = busio.I2C(board.SCL, board.SDA)
-        self.mcp = MCP23017(self.i2c, address=0x27)
+        self.mcp = MCP23017(self.i2c, address=0x20)
 
         self.onboard_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.ONBOARD]
         self.mcp_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP]
@@ -107,6 +107,12 @@ class SaxHardware:
         self.onboard_button_keys = keypad.Keys(onboard_pins, value_when_pressed=False, pull=True)
         print("Initialized onboard GPIO")
 
+        # 8. Initialize the breath sensor
+        self.breath_sensor = BreathSensor(self.i2c)
+
+    async def start_hardware(self):
+        await self.breath_sensor.start()
+
     def stop_note(self):
         """Releases all active notes to trigger the fade-out envelope."""
         self.synth.release_all()
@@ -120,6 +126,10 @@ class SaxHardware:
             waveform=self.sax_waveform
         )
         self.synth.press(note)
+
+    def play_note_if_breathing(self, midi_number):
+        if self.breath_sensor.breath_sensor_triggered:
+            self.play_note(midi_number)
 
     def load_wav_buffer(self, filename):
         """Hacks a standard 16-bit mono WAV file directly into a raw array."""

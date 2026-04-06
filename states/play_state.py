@@ -168,8 +168,9 @@ class PlayState:
 
             # 2. Handle Note Logic
             target_note = self.hw.get_current_note()
+            breathing = self.hw.breath_sensor.breath_sensor_triggered
 
-            if target_note is None:
+            if target_note is None or not breathing:
                 self.hw.stop_note()
                 await self.hide_notes()
                 self.current_note_playing = None

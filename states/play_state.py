@@ -11,7 +11,7 @@ from hardware.saxophone import SaxHardware
 
 class PlayState:
     OFF_SCREEN_Y = 240
-    C_LEDGER_LINE_Y = 194
+    C_LEDGER_LINE_Y = 197
 
     def __init__(self, hardware):
         self.hw = hardware

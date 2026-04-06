@@ -86,19 +86,27 @@ class SaxHardware:
 
         # --- Buttons ---
         # --- I2C MCP23017 Setup ---
-        print("Initializing MCP0 at address 0x20")
+        print("Initializing MCPs at addresses 0x20 and 0x21")
         self.i2c = busio.I2C(board.SCL, board.SDA)
-        self.mcp = MCP23017(self.i2c, address=0x20)
+        self.mcp1 = MCP23017(self.i2c, address=0x20)
+        self.mcp2 = MCP23017(self.i2c, address=0x21)
 
         self.onboard_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.ONBOARD]
-        self.mcp_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP]
+        self.mcp1_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP1]
+        self.mcp2_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP2]
 
         # Initialize the pins for buttons managed by MCP GPIO
-        for btn in self.mcp_buttons:
-            pin = self.mcp.get_pin(btn.hw_pin)
+        for btn in self.mcp1_buttons:
+            print(f"Button mcp1")
+            pin = self.mcp1.get_pin(btn.hw_pin)
             pin.direction = digitalio.Direction.INPUT
             pin.pull = digitalio.Pull.UP
-        print("Initalized MCP")
+        for btn in self.mcp2_buttons:
+            print(f"Button mcp2")
+            pin = self.mcp2.get_pin(btn.hw_pin)
+            pin.direction = digitalio.Direction.INPUT
+            pin.pull = digitalio.Pull.UP
+        print("Initialized MCPs")
 
         # initialize the pins for buttons managed by onboard GPIO
         print("Initializing Onboard GPIO")
@@ -162,9 +170,12 @@ class SaxHardware:
             button_def.is_pressed = event.pressed
 
         # 3. Poll the MCP GPIO and set button states
-        mcp_register = self.mcp.gpio
-        for btn in self.mcp_buttons:
+        mcp_register = self.mcp1.gpio
+        for btn in self.mcp1_buttons:
             # If the bit is 0, it is pulled to ground (pressed)
+            btn.is_pressed = not (mcp_register & (1 << btn.hw_pin))
+        mcp_register = self.mcp2.gpio
+        for btn in self.mcp2_buttons:
             btn.is_pressed = not (mcp_register & (1 << btn.hw_pin))
 
         # DEBUG - print buttons just pressed

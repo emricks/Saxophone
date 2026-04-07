@@ -11,7 +11,10 @@ from hardware.saxophone import SaxHardware
 
 class PlayState:
     OFF_SCREEN_Y = 240
-    C_LEDGER_LINE_Y = 197
+    C_LEDGER_LINE_Y = 208
+    A_LEDGER_LINE_Y = 76
+    HIGH_C_LEDGER_LINE_Y = 54
+    E_LEDGER_LINE_Y = 32
 
     def __init__(self, hardware):
         self.hw = hardware
@@ -49,16 +52,22 @@ class PlayState:
         staff_palette.make_transparent(1) 
         
         # Two copies of the staff side-by-side, centered vertically
-        staff_y = (240 // 2) - (69 // 2) # Center vertically
+        staff_y = (240 // 2) - (69 // 2) + 11 # Center vertically, move down to allow more room for notes
         staff_x_start = 32 # Start a bit in from the left
         
         self.staff_1 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start, y=staff_y)
         self.staff_2 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 60, y=staff_y)
-        self.staff_3 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        
+        self.c_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
+        self.a_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
+        self.high_c_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
+        self.e_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=staff_x_start + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
+
         self.ui_group.append(self.staff_1)
         self.ui_group.append(self.staff_2)
-        self.ui_group.append(self.staff_3)
+        self.ui_group.append(self.c_ledger_line)
+        self.ui_group.append(self.a_ledger_line)
+        self.ui_group.append(self.high_c_ledger_line)
+        self.ui_group.append(self.e_ledger_line)
 
         # Load Treble Clef (36x72)
         clef_bitmap, clef_palette = adafruit_imageload.load(
@@ -134,7 +143,10 @@ class PlayState:
         self.note_sprite.y = PlayState.OFF_SCREEN_Y
         self.sharp_sprite.y = PlayState.OFF_SCREEN_Y
         self.flat_sprite.y = PlayState.OFF_SCREEN_Y
-        self.staff_3.y = PlayState.OFF_SCREEN_Y
+        self.c_ledger_line.y = PlayState.OFF_SCREEN_Y
+        self.a_ledger_line.y = PlayState.OFF_SCREEN_Y
+        self.high_c_ledger_line.y = PlayState.OFF_SCREEN_Y
+        self.e_ledger_line.y = PlayState.OFF_SCREEN_Y
 
     def update_chart(self):
         for button in Buttons.ALL:
@@ -162,7 +174,7 @@ class PlayState:
             self.hw.update_button_states()
             self.update_chart()
 
-            if Buttons.R_B_FLAT.just_pressed:
+            if Buttons.L_SELECT.just_pressed:
                 self.is_running = False
                 break
 
@@ -184,13 +196,18 @@ class PlayState:
                 if target_note is not None:
                     self.hw.play_note(target_note.midi_number)
                     self.note_sprite.y = target_note.staff_y_coord
-
                     if target_note.accidental is Accidental.SHARP:
                         self.sharp_sprite.y = self.note_sprite.y + 36
                     if target_note.accidental is Accidental.FLAT:
                         self.flat_sprite.y = self.note_sprite.y + 24
-                    if target_note is Notes.C_4:
-                        self.staff_3.y = PlayState.C_LEDGER_LINE_Y
+                    if target_note in Notes.C_LINE:
+                        self.c_ledger_line.y = PlayState.C_LEDGER_LINE_Y
+                    if target_note in Notes.A_LINE:
+                        self.a_ledger_line.y = PlayState.A_LEDGER_LINE_Y
+                    if target_note in Notes.HIGH_C_LINE:
+                        self.high_c_ledger_line.y = PlayState.HIGH_C_LEDGER_LINE_Y
+                    if target_note in Notes.E_LINE:
+                        self.e_ledger_line.y = PlayState.E_LEDGER_LINE_Y
 
                 self.current_note_playing = target_note
 

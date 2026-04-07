@@ -61,7 +61,7 @@ class MenuState:
             elif Buttons.R_2.just_pressed:
                 self.selected_index = (self.selected_index + 1) % len(self.current_menu["items"])
                 self.update_selection_ui()
-            elif Buttons.R_B_FLAT.just_pressed:
+            elif Buttons.L_SELECT.just_pressed:
                 selected_item = self.current_menu["items"][self.selected_index]
                 item_type = selected_item.get("type")
 

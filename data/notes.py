@@ -118,11 +118,11 @@ class Notes:
     ALL = (B_FLAT_3, B_3,
            C_4, C_SHARP_4, D_4, E_FLAT_4, E_4, F_4, F_SHARP_4, G_4, A_FLAT_4, A_4, B_FLAT_4, B_4,
            C_5, C_SHARP_5, D_5, E_FLAT_5, E_5, F_5, F_SHARP_5, G_5, A_FLAT_5, A_5, B_FLAT_5, B_5,
-           C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6)
+           C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6, F_SHARP_6)
     C_LINE = {B_FLAT_3, B_3, C_4, C_SHARP_4}
-    A_LINE = {A_FLAT_5, A_5, B_FLAT_5, B_5, C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6}
-    HIGH_C_LINE = {C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6}
-    E_LINE = {E_FLAT_6, E_6, F_6}
+    A_LINE = {A_FLAT_5, A_5, B_FLAT_5, B_5, C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6, F_SHARP_6}
+    HIGH_C_LINE = {C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6, F_SHARP_6}
+    E_LINE = {E_FLAT_6, E_6, F_6, F_SHARP_6}
     # Build a reverse lookup dictionary for instant access: bitmask -> Note
     MASK_TO_NOTE = {}
 

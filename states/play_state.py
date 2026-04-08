@@ -15,6 +15,9 @@ class PlayState:
     A_LEDGER_LINE_Y = 76
     HIGH_C_LEDGER_LINE_Y = 54
     E_LEDGER_LINE_Y = 32
+    BG_COLOR = 0x000000
+    FG_COLOR = 0x00FE03
+    BLIT_COLOR = 0xFF00FF
 
     def __init__(self, hardware):
         self.hw = hardware
@@ -27,7 +30,7 @@ class PlayState:
         # Black Background
         color_bitmap = displayio.Bitmap(320, 240, 1)
         color_palette = displayio.Palette(1)
-        color_palette[0] = 0x000000
+        color_palette[0] = self.BG_COLOR
         bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
         self.ui_group.append(bg_sprite)
 
@@ -35,7 +38,7 @@ class PlayState:
         self.title_label = label.Label(
             terminalio.FONT,
             text="Free Play",
-            color=0x00FE03,
+            color=self.FG_COLOR,
             scale=2,
             x=10,
             y=15
@@ -50,7 +53,7 @@ class PlayState:
         )
         # Make color index 1 transparent
         staff_palette.make_transparent(1)
-        staff_palette[0] = 0x00FE03
+        staff_palette[0] = self.FG_COLOR
         
         # Two copies of the staff side-by-side, centered vertically
         staff_y = (240 // 2) - (69 // 2) + 11 # Center vertically, move down to allow more room for notes
@@ -78,7 +81,7 @@ class PlayState:
         )
         # Make color index 1 transparent
         clef_palette.make_transparent(1)
-        clef_palette[0] = 0x00FE03
+        clef_palette[0] = self.FG_COLOR
         
         # Place treble clef on the far left of the staff
         clef_y = staff_y - 2 # Minor adjustment to align with staff visually
@@ -94,7 +97,7 @@ class PlayState:
 
         # Make color index 1 transparent
         note_palette.make_transparent(1)
-        note_palette[0] = 0x00FE03
+        note_palette[0] = self.FG_COLOR
         
         # Place note on the staff (starting position will be updated in run)
         self.note_sprite = displayio.TileGrid(note_bitmap, pixel_shader=note_palette, x=staff_x_start + 60, y=PlayState.OFF_SCREEN_Y)
@@ -107,7 +110,7 @@ class PlayState:
             palette=displayio.Palette
         )
         sharp_palette.make_transparent(1)
-        sharp_palette[0] = 0x00FE03
+        sharp_palette[0] = self.FG_COLOR
         self.sharp_sprite = displayio.TileGrid(sharp_bitmap, pixel_shader=sharp_palette, x=staff_x_start + 40, y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.sharp_sprite)
 
@@ -117,7 +120,7 @@ class PlayState:
             palette=displayio.Palette
         )
         flat_palette.make_transparent(1)
-        flat_palette[0] = 0x00FE03
+        flat_palette[0] = self.FG_COLOR
         self.flat_sprite = displayio.TileGrid(flat_bitmap, pixel_shader=flat_palette, x=staff_x_start + 40, y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.flat_sprite)
 
@@ -128,8 +131,8 @@ class PlayState:
             palette=displayio.Palette
         )
         chart_palette.make_transparent(1)
-        chart_palette[0] = 0x00FE03
-        chart_palette[2] = 0xFF00FF
+        chart_palette[0] = self.FG_COLOR
+        chart_palette[2] = self.BLIT_COLOR
         self.chart_sprite = displayio.TileGrid(chart_bitmap, pixel_shader=chart_palette, x=210, y=0)
 
         self.blit_bitmap, blit_palette = adafruit_imageload.load(
@@ -137,7 +140,7 @@ class PlayState:
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        blit_palette[2] = 0xFF00FF
+        blit_palette[2] = self.BLIT_COLOR
         self.unblit_bitmap, unblit_palette = adafruit_imageload.load(
             "data/img/sax_fingering_unblit.png",
             bitmap=displayio.Bitmap,

@@ -8,6 +8,7 @@ import fourwire
 import adafruit_ili9341
 import keypad
 import audiobusio
+import audiopwmio
 import synthio
 import audiomixer
 from adafruit_mcp230xx.mcp23017 import MCP23017
@@ -28,7 +29,7 @@ class SaxHardware:
         self.spi = busio.SPI(clock=board.SCK, MOSI=board.MOSI)
         self.tft_cs = board.MISO
         self.tft_dc = board.RX
-        self.tft_rst = board.D4
+        self.tft_rst = board.D25
 
         self.backlight = digitalio.DigitalInOut(board.TX)
         self.backlight.direction = digitalio.Direction.OUTPUT
@@ -41,6 +42,7 @@ class SaxHardware:
         print("Display initialized!")
         # --- Audio Setup ---
         print("Initializing audio...")
+        '''
         # 1. Turn on the Prop-Maker's I2S Amplifier
         self.audio_enable = digitalio.DigitalInOut(board.EXTERNAL_POWER)
         self.audio_enable.direction = digitalio.Direction.OUTPUT
@@ -48,10 +50,12 @@ class SaxHardware:
 
         # 2. Set up the I2S Bus
         self.audio = audiobusio.I2SOut(
-            bit_clock=board.I2S_BIT_CLOCK,
-            word_select=board.I2S_WORD_SELECT,
-            data=board.I2S_DATA
+            bit_clock=board.D6,
+            word_select=board.D5,
+            data=board.D9
         )
+        '''
+        self.audio = audiopwmio.PWMAudioOut(board.A0)
 
         # 3. Create the Mixer and play it on the audio bus
         self.mixer = audiomixer.Mixer(
@@ -69,11 +73,11 @@ class SaxHardware:
         self.mixer.voice[0].play(self.synth)
 
         # 5. Set Master Volume
-        self.mixer.voice[0].level = 0.3
+        self.mixer.voice[0].level = 0.5
 
         # 6. The Breath (Envelope)
         self.sax_envelope = synthio.Envelope(
-            attack_time=0.1,  # 100ms fade-in
+            attack_time=0.05,  # 50ms fade-in
             decay_time=0.0,
             release_time=SaxHardware.NOTE_RELEASE_TIME,
             attack_level=1.0,
@@ -87,7 +91,7 @@ class SaxHardware:
         # --- Buttons ---
         # --- I2C MCP23017 Setup ---
         print("Initializing MCPs at addresses 0x20 and 0x21")
-        self.i2c = busio.I2C(board.SCL, board.SDA)
+        self.i2c = board.STEMMA_I2C()
         self.mcp1 = MCP23017(self.i2c, address=0x20)
         self.mcp2 = MCP23017(self.i2c, address=0x21)
 

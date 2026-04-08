@@ -80,12 +80,13 @@ class MenuState:
                     else:
                         print(f"Warning: '{selected_item.get('text')}' has no items!")
 
-                elif item_type == "drill":
+                elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})
-                    from states.drill_state import DrillState
-
-                    next_state = DrillState(self.hw, payload)
+                    from states.scale_drill_state import ScaleDrillState
+                    next_state = ScaleDrillState(self.hw, payload)
                     await next_state.run()
+                    del next_state
+                    gc.collect()
                     self.hw.display.root_group = self.ui_group
                 elif item_type == "play":
                     from states.play_state import PlayState

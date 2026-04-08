@@ -7,25 +7,32 @@ MAIN_MENU = {
             "type": "menu",
             "items": [
                 {
-                    "text": "SIGHT READING",
+                    "text": "Scales",
                     "type": "menu",
                     "items": [
                         {
                             "text": "C Major Scale",
-                            "type": "drill",
-                            "payload": {
-                                "name": "C Major",
-                                "notes": ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]
-                            }
+                            "type": "menu",
+                            "items": [
+                                {
+                                    "text": "In Order",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Major",
+                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
+                                    }
+                                },
+                                {
+                                    "text": "Random",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Major",
+                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
+                                    }
+                                }
+                            ]
                         },
-                        {
-                            "text": "G Pentatonic",
-                            "type": "drill",
-                            "payload": {
-                                "name": "G Pentatonic",
-                                "notes": ["G4", "A4", "B4", "D5", "E5"]
-                            }
-                        },
+
                         {"text": "< Back", "type": "back"}
                     ]
                 },

@@ -7,8 +7,8 @@ import adafruit_bmp3xx
 class BreathSensor:
     # breath sensor constants
     THRESHOLD = 0.04  # hPa change required to trigger breath sensor
-    NOISE_FLOOR = THRESHOLD / 2  # Changes smaller than this are treated as drift (baseline updates)
-    LEARNING_RATE = 0.01  # How quickly the baseline follows drift (0.01 = 1%)
+    NOISE_FLOOR = THRESHOLD  # Changes smaller than this are treated as drift (baseline updates)
+    LEARNING_RATE = 0.05  # How quickly the baseline follows drift (e.g. 0.01 = 1%)
     CHECK_INTERVAL = .05 # how often to check if sensor is activated
 
     def __init__(self, i2c):
@@ -16,7 +16,7 @@ class BreathSensor:
 
         self.breath_sensor = adafruit_bmp3xx.BMP3XX_I2C(i2c)
         self.breath_sensor.pressure_oversampling = 8
-        self.breath_sensor.filter_coefficient = 2
+        self.breath_sensor.filter_coefficient = 4
         self.breath_sensor_baseline = self.__get_breath_sensor_baseline__()
 
     def __get_breath_sensor_baseline__(self):
@@ -42,7 +42,7 @@ class BreathSensor:
                 self.__update_breath_sensor_baseline__()
             self.breath_sensor_triggered = diff > BreathSensor.THRESHOLD
             #DEBUG
-            #print(f"Breath Sensor Triggered: {self.breath_sensor_triggered}, diff: {diff}, baseline: {self.breath_sensor_baseline}, current: {current_pressure}")
+            # print(f"Breath Sensor Triggered: {self.breath_sensor_triggered}, diff: {diff}, baseline: {self.breath_sensor_baseline}, current: {current_pressure}")
             await asyncio.sleep(BreathSensor.CHECK_INTERVAL)
 
     async def start(self):

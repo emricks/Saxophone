@@ -9,7 +9,7 @@ from states.play_state import PlayState
 
 
 class ScaleDrillState(PlayState):
-    def __init__(self, hardware, payload):
-        super().__init__(hardware)
+    def __init__(self, hardware, payload, color_data):
+        super().__init__(hardware, color_data)
         self.drill_name = payload.get("name", "Unknown Drill")
         self.notes = payload.get("notes", [])

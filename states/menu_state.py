@@ -5,6 +5,7 @@ import displayio
 import terminalio
 from adafruit_display_text import label
 
+from data.config import ColorConfig
 from hardware.buttons import Buttons
 
 
@@ -14,6 +15,7 @@ class MenuState:
         self.current_menu = menu_data
         self.menu_stack = []
         self.selected_index = 0
+        self.colors = ColorConfig()
 
         self.ui_group = displayio.Group()
         self.hw.display.root_group = self.ui_group
@@ -65,6 +67,7 @@ class MenuState:
                 selected_item = self.current_menu["items"][self.selected_index]
                 item_type = selected_item.get("type")
 
+
                 if item_type == "back":
                     if self.menu_stack:
                         self.current_menu = self.menu_stack.pop()
@@ -80,17 +83,25 @@ class MenuState:
                     else:
                         print(f"Warning: '{selected_item.get('text')}' has no items!")
 
+                elif item_type == "color":
+                    payload = selected_item.get("payload")
+                    self.colors = ColorConfig(
+                        fg_color=payload.get("fg_color"),
+                        bg_color=payload.get("bg_color"),
+                        chart_color=payload.get("chart_color"),
+                        fingering_color=payload.get("fingering_color")
+                    )
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})
                     from states.scale_drill_state import ScaleDrillState
-                    next_state = ScaleDrillState(self.hw, payload)
+                    next_state = ScaleDrillState(self.hw, payload, self.colors)
                     await next_state.run()
                     del next_state
                     gc.collect()
                     self.hw.display.root_group = self.ui_group
                 elif item_type == "play":
                     from states.play_state import PlayState
-                    next_state = PlayState(self.hw)
+                    next_state = PlayState(self.hw, self.colors)
                     await next_state.run()
                     del next_state
                     gc.collect()

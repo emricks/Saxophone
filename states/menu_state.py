@@ -5,7 +5,7 @@ import displayio
 import terminalio
 from adafruit_display_text import label
 
-from data.config import ColorConfig
+from data.config import ColorConfig, Config
 from hardware.buttons import Buttons
 
 
@@ -15,7 +15,7 @@ class MenuState:
         self.current_menu = menu_data
         self.menu_stack = []
         self.selected_index = 0
-        self.colors = ColorConfig()
+        self.config = Config()
 
         self.ui_group = displayio.Group()
         self.hw.display.root_group = self.ui_group
@@ -85,7 +85,8 @@ class MenuState:
 
                 elif item_type == "color":
                     payload = selected_item.get("payload")
-                    self.colors = ColorConfig(
+                    self.config.color_data = ColorConfig(
+                        name=payload.get("name"),
                         fg_color=payload.get("fg_color"),
                         bg_color=payload.get("bg_color"),
                         chart_color=payload.get("chart_color"),
@@ -94,14 +95,14 @@ class MenuState:
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})
                     from states.scale_drill_state import ScaleDrillState
-                    next_state = ScaleDrillState(self.hw, payload, self.colors)
+                    next_state = ScaleDrillState(self.hw, payload, self.config)
                     await next_state.run()
                     del next_state
                     gc.collect()
                     self.hw.display.root_group = self.ui_group
                 elif item_type == "play":
                     from states.play_state import PlayState
-                    next_state = PlayState(self.hw, self.colors)
+                    next_state = PlayState(self.hw, self.config)
                     await next_state.run()
                     del next_state
                     gc.collect()

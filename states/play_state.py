@@ -5,7 +5,7 @@ import terminalio
 import adafruit_imageload
 from adafruit_display_text import label
 
-from data.config import ColorConfig
+from data.config import ColorConfig, Config
 from data.notes import Accidental, Notes
 from hardware.buttons import Buttons
 from hardware.saxophone import SaxHardware
@@ -18,7 +18,7 @@ class PlayState:
     HIGH_C_LEDGER_LINE_Y = 54
     E_LEDGER_LINE_Y = 32
 
-    def __init__(self, hardware, color_data: ColorConfig):
+    def __init__(self, hardware, config: Config):
         self.hw = hardware
         self.is_running = True
         self.current_note_playing = None
@@ -29,7 +29,7 @@ class PlayState:
         # Background
         color_bitmap = displayio.Bitmap(320, 240, 1)
         color_palette = displayio.Palette(1)
-        color_palette[0] = color_data.bg_color
+        color_palette[0] = config.color_data.bg_color
         bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
         self.ui_group.append(bg_sprite)
 
@@ -37,7 +37,7 @@ class PlayState:
         self.title_label = label.Label(
             terminalio.FONT,
             text="Free Play",
-            color=color_data.fg_color,
+            color=config.color_data.fg_color,
             scale=2,
             x=10,
             y=15
@@ -52,7 +52,7 @@ class PlayState:
         )
         # Make color index 1 transparent
         staff_palette.make_transparent(1)
-        staff_palette[0] = color_data.fg_color
+        staff_palette[0] = config.color_data.fg_color
         
         # Two copies of the staff side-by-side, centered vertically
         staff_y = (240 // 2) - (69 // 2) + 11 # Center vertically, move down to allow more room for notes
@@ -80,7 +80,7 @@ class PlayState:
         )
         # Make color index 1 transparent
         clef_palette.make_transparent(1)
-        clef_palette[0] = color_data.fg_color
+        clef_palette[0] = config.color_data.fg_color
         
         # Place treble clef on the far left of the staff
         clef_y = staff_y - 2 # Minor adjustment to align with staff visually
@@ -96,7 +96,7 @@ class PlayState:
 
         # Make color index 1 transparent
         note_palette.make_transparent(1)
-        note_palette[0] = color_data.fg_color
+        note_palette[0] = config.color_data.fg_color
         
         # Place note on the staff (starting position will be updated in run)
         self.note_sprite = displayio.TileGrid(note_bitmap, pixel_shader=note_palette, x=staff_x_start + 60, y=PlayState.OFF_SCREEN_Y)
@@ -109,7 +109,7 @@ class PlayState:
             palette=displayio.Palette
         )
         sharp_palette.make_transparent(1)
-        sharp_palette[0] = color_data.fg_color
+        sharp_palette[0] = config.color_data.fg_color
         self.sharp_sprite = displayio.TileGrid(sharp_bitmap, pixel_shader=sharp_palette, x=staff_x_start + 40, y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.sharp_sprite)
 
@@ -119,7 +119,7 @@ class PlayState:
             palette=displayio.Palette
         )
         flat_palette.make_transparent(1)
-        flat_palette[0] = color_data.fg_color
+        flat_palette[0] = config.color_data.fg_color
         self.flat_sprite = displayio.TileGrid(flat_bitmap, pixel_shader=flat_palette, x=staff_x_start + 40, y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.flat_sprite)
 
@@ -130,8 +130,8 @@ class PlayState:
             palette=displayio.Palette
         )
         chart_palette.make_transparent(1)
-        chart_palette[0] = color_data.chart_color
-        chart_palette[2] = color_data.fingering_color
+        chart_palette[0] = config.color_data.chart_color
+        chart_palette[2] = config.color_data.fingering_color
         self.chart_sprite = displayio.TileGrid(chart_bitmap, pixel_shader=chart_palette, x=210, y=0)
 
         self.blit_bitmap, blit_palette = adafruit_imageload.load(
@@ -139,13 +139,13 @@ class PlayState:
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        blit_palette[2] = color_data.fingering_color
+        blit_palette[2] = config.color_data.fingering_color
         self.unblit_bitmap, unblit_palette = adafruit_imageload.load(
             "data/img/sax_fingering_unblit.png",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        unblit_palette[0] = color_data.chart_color
+        unblit_palette[0] = config.color_data.chart_color
 
     async def hide_notes(self):
         # remove notes visually at/after notes stop playing

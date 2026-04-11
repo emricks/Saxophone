@@ -26,13 +26,13 @@ MAIN_MENU = {
                                     "text": "Random",
                                     "type": "scale_drill",
                                     "payload": {
-                                        "name": "C Major",
+                                        "name": "C Major (Random)",
                                         "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
                                     }
-                                }
+                                },
+                                {"text": "< Back", "type": "back"}
                             ]
                         },
-
                         {"text": "< Back", "type": "back"}
                     ]
                 },

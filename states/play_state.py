@@ -18,7 +18,7 @@ class PlayState:
     HIGH_C_LEDGER_LINE_Y = 54
     E_LEDGER_LINE_Y = 32
 
-    def __init__(self, hardware, config: Config):
+    def __init__(self, hardware, config: Config, title="Free Play"):
         self.hw = hardware
         self.is_running = True
         self.current_note_playing = None
@@ -36,9 +36,9 @@ class PlayState:
         # Drill Name along the top
         self.title_label = label.Label(
             terminalio.FONT,
-            text="Free Play",
+            text=title,
             color=config.color_data.fg_color,
-            scale=2,
+            scale=1,
             x=10,
             y=15
         )

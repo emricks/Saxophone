@@ -8,7 +8,6 @@ import fourwire
 import adafruit_ili9341
 import keypad
 import audiobusio
-import audiopwmio
 import synthio
 import audiomixer
 from adafruit_mcp230xx.mcp23017 import MCP23017
@@ -42,20 +41,12 @@ class SaxHardware:
         print("Display initialized!")
         # --- Audio Setup ---
         print("Initializing audio...")
-        '''
-        # 1. Turn on the Prop-Maker's I2S Amplifier
-        self.audio_enable = digitalio.DigitalInOut(board.EXTERNAL_POWER)
-        self.audio_enable.direction = digitalio.Direction.OUTPUT
-        self.audio_enable.value = True
-
-        # 2. Set up the I2S Bus
+        # Set up the I2S Bus
         self.audio = audiobusio.I2SOut(
-            bit_clock=board.D6,
-            word_select=board.D5,
+            bit_clock=board.D5,
+            word_select=board.D6,
             data=board.D9
         )
-        '''
-        self.audio = audiopwmio.PWMAudioOut(board.A0)
 
         # 3. Create the Mixer and play it on the audio bus
         self.mixer = audiomixer.Mixer(
@@ -73,7 +64,7 @@ class SaxHardware:
         self.mixer.voice[0].play(self.synth)
 
         # 5. Set Master Volume
-        self.mixer.voice[0].level = 0.5
+        self.mixer.voice[0].level = 0.3
 
         # 6. The Breath (Envelope)
         self.sax_envelope = synthio.Envelope(

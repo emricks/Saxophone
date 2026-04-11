@@ -1,3 +1,5 @@
+from typing import Any
+
 from hardware.buttons import Buttons
 
 class Accidental:
@@ -156,7 +158,7 @@ class Notes:
             MASK_TO_NOTE[mask] = note
 
     @staticmethod
-    def get_note_by_name(name):
+    def get_note_by_name(name) -> Note | None:
         """Returns the Note instance corresponding to the given name string."""
         return getattr(Notes, name, None)
 

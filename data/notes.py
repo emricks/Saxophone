@@ -1,5 +1,3 @@
-from typing import Any
-
 from hardware.buttons import Buttons
 
 class Accidental:

@@ -5,8 +5,8 @@ DEST = /Volumes/CIRCUITPY/
 # Default target
 deploy:
 	@echo "Deploying to CircuitPython..."
-	rsync -rtuv --exclude='.DS_Store' hardware data states songs $(DEST)
-	rsync -rtuv code.py $(DEST)
+	rsync -rtv --exclude='.DS_Store' hardware data states songs $(DEST)
+	rsync -rtv code.py $(DEST)
 	@echo "Deployment complete!"
 
 # Install Python dependencies for local PyCharm autocomplete

@@ -231,13 +231,25 @@ class PlayState:
         if note is not None:
             if note.accidental is Accidental.SHARP and sharp_sprite.y == PlayState.OFF_SCREEN_Y:
                 sharp_sprite.y = note_sprite.y + 36
+            elif note.accidental is not Accidental.SHARP:
+                sharp_sprite.y = PlayState.OFF_SCREEN_Y
             if note.accidental is Accidental.FLAT and flat_sprite.y == PlayState.OFF_SCREEN_Y:
                 flat_sprite.y = note_sprite.y + 24
+            elif note.accidental is not Accidental.FLAT:
+                flat_sprite.y = PlayState.OFF_SCREEN_Y
             if note in Notes.C_LINE and c_ledger_line.y == PlayState.OFF_SCREEN_Y:
                 c_ledger_line.y = PlayState.C_LEDGER_LINE_Y
+            elif note not in Notes.C_LINE:
+                c_ledger_line.y = PlayState.OFF_SCREEN_Y
             if note in Notes.A_LINE and a_ledger_line.y == PlayState.OFF_SCREEN_Y:
                 a_ledger_line.y = PlayState.A_LEDGER_LINE_Y
+            elif note not in Notes.A_LINE:
+                a_ledger_line.y = PlayState.OFF_SCREEN_Y
             if note in Notes.HIGH_C_LINE and high_c_ledger_line.y == PlayState.OFF_SCREEN_Y:
                 high_c_ledger_line.y = PlayState.HIGH_C_LEDGER_LINE_Y
+            elif note not in Notes.HIGH_C_LINE:
+                high_c_ledger_line.y = PlayState.OFF_SCREEN_Y
             if note in Notes.E_LINE and e_ledger_line.y == PlayState.OFF_SCREEN_Y:
                 e_ledger_line.y = PlayState.E_LEDGER_LINE_Y
+            elif note not in Notes.E_LINE:
+                e_ledger_line.y = PlayState.OFF_SCREEN_Y

@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 import adafruit_imageload
 import displayio
@@ -15,6 +16,11 @@ class ScaleDrillState(PlayState):
 
         note_names = payload.get("notes", [])
         self.notes = [Notes.get_note_by_name(name) for name in note_names if Notes.get_note_by_name(name) is not None]
+        self.random_notes = []
+        for i in range(len(self.notes)):
+            self.random_notes.append(random.choice(self.notes))
+
+        self.notes += self.random_notes
 
         # set up drill note display
         drill_note_bitmap, drill_note_palette = adafruit_imageload.load(
@@ -65,26 +71,32 @@ class ScaleDrillState(PlayState):
         self.ui_group.append(self.drill_flat_sprite)
 
     async def run(self):
+        drill_note_index = 0
         while self.is_running:
             if self.hw.display.root_group != self.ui_group:
                 self.hw.display.root_group = self.ui_group
 
             self.hw.update_button_states()
 
-            if Buttons.L_SELECT.just_pressed:
+            if Buttons.L_SELECT.just_pressed or drill_note_index == len(self.notes):
                 # exit if select button pressed
                 self.is_running = False
                 break
 
             # show current drill note
-            self.draw_drill_note(self.notes[0])
+            self.draw_drill_note(self.notes[drill_note_index])
 
             # show playing note
             target_note = self.hw.get_current_note()
             await self.process_playing_note(target_note)
 
+            breathing = self.hw.breath_sensor.breath_sensor_triggered
+            if target_note == self.notes[drill_note_index] and breathing:
+                drill_note_index += 1
+
             # yield control for other code to run
             await asyncio.sleep(0.001)
+        self.hw.stop_note()
 
     def draw_drill_note(self, note):
         self.drill_note_sprite.y = note.staff_y_coord

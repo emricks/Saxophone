@@ -50,7 +50,7 @@ class SaxHardware:
 
         # 3. Create the Mixer and play it on the audio bus
         self.mixer = audiomixer.Mixer(
-            voice_count=1,
+            voice_count=2,
             sample_rate=22050,
             channel_count=1,
             bits_per_sample=16,

@@ -41,11 +41,7 @@ MAIN_MENU = {
         },
         {
             "text": "SONGS",
-            "type": "menu",
-            "items": [
-                {"text": "COMING SOON", "type": "info"},
-                {"text": "< Back", "type": "back"}
-            ]
+            "type": "song"
         },
         {
             "text": "FREE PLAY",

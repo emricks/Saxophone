@@ -66,6 +66,9 @@ class ScaleDrillState(PlayState):
 
     async def run(self):
         while self.is_running:
+            if self.hw.display.root_group != self.ui_group:
+                self.hw.display.root_group = self.ui_group
+
             self.hw.update_button_states()
 
             if Buttons.L_SELECT.just_pressed:

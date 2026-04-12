@@ -5,7 +5,7 @@ DEST = /Volumes/CIRCUITPY/
 # Default target
 deploy:
 	@echo "Deploying to CircuitPython..."
-	rsync -rtuv --exclude='.DS_Store' hardware data states $(DEST)
+	rsync -rtuv --exclude='.DS_Store' hardware data states songs $(DEST)
 	rsync -rtuv code.py $(DEST)
 	@echo "Deployment complete!"
 

@@ -28,7 +28,6 @@ class PlayState:
         self.current_note_playing = None
 
         self.ui_group = displayio.Group()
-        self.hw.display.root_group = self.ui_group
 
         # Background
         color_bitmap = displayio.Bitmap(320, 240, 1)
@@ -180,7 +179,12 @@ class PlayState:
 
 
     async def run(self):
-        self.ui_group.append(self.chart_sprite)
+        if self.hw.display.root_group != self.ui_group:
+            self.hw.display.root_group = self.ui_group
+
+        if self.chart_sprite not in self.ui_group:
+            self.ui_group.append(self.chart_sprite)
+
         self.current_note_playing = None
         self.hw.stop_note()
         await self.hide_notes()

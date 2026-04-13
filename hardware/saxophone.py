@@ -92,12 +92,10 @@ class SaxHardware:
 
         # Initialize the pins for buttons managed by MCP GPIO
         for btn in self.mcp1_buttons:
-            print(f"Button mcp1")
             pin = self.mcp1.get_pin(btn.hw_pin)
             pin.direction = digitalio.Direction.INPUT
             pin.pull = digitalio.Pull.UP
         for btn in self.mcp2_buttons:
-            print(f"Button mcp2")
             pin = self.mcp2.get_pin(btn.hw_pin)
             pin.direction = digitalio.Direction.INPUT
             pin.pull = digitalio.Pull.UP

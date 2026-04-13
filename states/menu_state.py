@@ -64,27 +64,32 @@ class MenuState:
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})
                     from states.scale_drill_state import ScaleDrillState
-                    next_state = ScaleDrillState(self.hw, payload, self.config)
-                    await next_state.run()
-                    del next_state
-                    gc.collect()
-                    self.hw.display.root_group = self.selectable_list.ui_group
+                    await self._transition_to_state(ScaleDrillState, payload)
                 elif item_type == "play":
                     from states.play_state import PlayState
-                    next_state = PlayState(self.hw, self.config)
-                    await next_state.run()
-                    del next_state
-                    gc.collect()
-                    self.hw.display.root_group = self.selectable_list.ui_group
+                    await self._transition_to_state(PlayState)
                 elif item_type == "song":
                     payload = selected_item.get("payload", {})
                     from states.song_state import SongState
-                    next_state = SongState(self.hw, payload, self.config)
-                    await next_state.run()
-                    del next_state
-                    gc.collect()
-                    self.hw.display.root_group = self.selectable_list.ui_group
+                    await self._transition_to_state(SongState, payload)
                 else:
                     print(f"Error: Unhandled menu type '{item_type}'")
 
             await asyncio.sleep(0.01)
+
+    async def _transition_to_state(self, state_class, payload=None):
+        """Helper to clear display and transition to a new state."""
+        # Clear display immediately to avoid showing old menu during loading
+        self.hw.display.root_group = None
+        await asyncio.sleep(0)
+
+        if payload is not None:
+            next_state = state_class(self.hw, payload, self.config)
+        else:
+            next_state = state_class(self.hw, self.config)
+
+        await next_state.run()
+        del next_state
+        gc.collect()
+        # Restore the menu UI
+        self.hw.display.root_group = self.selectable_list.ui_group

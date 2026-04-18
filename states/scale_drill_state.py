@@ -53,7 +53,7 @@ class ScaleDrillState(PlayState):
             palette=displayio.Palette
         )
         drill_note_palette.make_transparent(1)
-        drill_note_palette[0] = self.config.color_data.test_note_color
+        drill_note_palette[0] = self.config.color_data.drill_note_color
         self.drill_note_sprite = displayio.TileGrid(drill_note_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 60,
                                               y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.drill_note_sprite)

@@ -62,7 +62,7 @@ MAIN_MENU = {
                             "fg_color": 0x00FE03,
                             "chart_color": 0x00FE03,
                             "fingering_color": 0xFF01FC,
-                            "test_note_color": 0xFF6000
+                            "drill_note_color": 0xFF6000
                         }},
                         {"text": "Christmas", "type": "color", "payload": {
                             "name": "Christmas",
@@ -70,7 +70,7 @@ MAIN_MENU = {
                             "fg_color": 0x00DD00,
                             "chart_color": 0x00DD00,
                             "fingering_color": 0xFFFF80,
-                            "test_note_color": 0xCCCCCC
+                            "drill_note_color": 0xCCCCCC
                         }},
                         {"text": "Default", "type": "color", "payload": {
                             "name": "Default",
@@ -78,7 +78,7 @@ MAIN_MENU = {
                             "fg_color": 0xFFFFFF,
                             "chart_color": 0xFFFFFF,
                             "fingering_color": 0xFF0000,
-                            "test_note_color": 0x00FF00
+                            "drill_note_color": 0x00FF00
                         }},
                         {"text": "> Back", "type": "back"}
                     ]

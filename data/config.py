@@ -7,13 +7,13 @@ class Config:
 
 class ColorConfig:
     def __init__(self, name="Default", bg_color=0x0000FF, chart_color=0xFFFFFF, fg_color=0xFFFFFF,
-                    fingering_color=0xFF0000, test_note_color=0x00FF00):
+                    fingering_color=0xFF0000, drill_note_color=0x00FF00):
         self.name = name
         self.bg_color = bg_color
         self.chart_color = chart_color
         self.fg_color = fg_color
         self.fingering_color = fingering_color
-        self.test_note_color = test_note_color
+        self.drill_note_color = drill_note_color
 
 class VolumeConfig:
     def __init__(self, volume=0.3):

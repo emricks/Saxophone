@@ -28,6 +28,7 @@ class PlayState:
         self.current_note_playing = None
 
         self.ui_group = displayio.Group()
+        self.hw.mixer.voice[0].level = config.volume_data.volume
 
         # Background
         color_bitmap = displayio.Bitmap(320, 240, 1)

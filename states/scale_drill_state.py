@@ -19,7 +19,6 @@ class ScaleDrillState(PlayState):
         super().__init__(hardware, config, title=self.drill_name)
 
         self.config = config
-        self.hw.mixer.voice[0].level = self.config.volume_data.volume
         # Scoring attributes
         self.total_score = 0
         self.note_start_time = None

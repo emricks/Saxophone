@@ -1,10 +1,11 @@
 import asyncio
 import random
+import time
 
 import adafruit_imageload
 import displayio
 
-from data.notes import Notes, Accidental
+from data.notes import Notes
 from hardware.buttons import Buttons
 from states.play_state import PlayState
 
@@ -13,6 +14,12 @@ class ScaleDrillState(PlayState):
     def __init__(self, hardware, payload, config):
         self.drill_name = payload.get("name", "Unknown Drill")
         super().__init__(hardware, config, title=self.drill_name)
+
+        # Scoring attributes
+        self.total_score = 0
+        self.note_start_time = None
+        self.note_played_time = None
+        self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
 
         note_names = payload.get("notes", [])
         self.notes = [Notes.get_note_by_name(name) for name in note_names if Notes.get_note_by_name(name) is not None]
@@ -72,6 +79,8 @@ class ScaleDrillState(PlayState):
 
     async def run(self):
         drill_note_index = 0
+        self.note_start_time = time.monotonic()
+
         while self.is_running:
             if self.hw.display.root_group != self.ui_group:
                 self.hw.display.root_group = self.ui_group
@@ -91,12 +100,43 @@ class ScaleDrillState(PlayState):
             await self.process_playing_note(target_note)
 
             breathing = self.hw.breath_sensor.breath_sensor_triggered
+            current_time = time.monotonic()
+
+            # 1. DETECTION: Did they start playing the right note?
             if target_note == self.notes[drill_note_index] and breathing:
-                drill_note_index += 1
+                if self.note_played_time is None:
+                    self.note_played_time = current_time
+                    # print(f"Note started! Waiting for 1s hold...")
+            else:
+                # If they stop breathing or play the wrong note, the "hold" is broken
+                if self.note_played_time is not None:
+                    self.note_played_time = None
+                    # print("Hold broken! Must start hold from beginning.")
+
+            # 2. VALIDATION: Have they held it long enough to earn the score?
+            if self.note_played_time is not None:
+                if current_time - self.note_played_time >= 1.0:
+                    # SUCCESS! Now we calculate and award the score
+                    if self.note_start_time is None:
+                        self.note_start_time = self.note_played_time
+
+                    reaction_time = self.note_played_time - self.note_start_time
+                    score = max(0, self.MAX_POSSIBLE_PER_NOTE - reaction_time)
+                    self.total_score += score
+
+                    print(f"Success! Score awarded: {score:.2f}")
+
+                    # Move to next note and reset state
+                    drill_note_index += 1
+                    self.note_start_time = time.monotonic()
+                    self.note_played_time = None
+                    print(f"Moving to next note. Total score so far: {self.total_score:.2f}")
 
             # yield control for other code to run
             await asyncio.sleep(0.001)
+
         self.hw.stop_note()
+        print(f"Drill finished! Final total score: {self.total_score:.2f}")
 
     def draw_drill_note(self, note):
         self.drill_note_sprite.y = note.staff_y_coord

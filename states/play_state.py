@@ -28,6 +28,8 @@ class PlayState:
         self.current_note_playing = None
 
         self.ui_group = displayio.Group()
+        self.hw.mixer.voice[0].level = config.volume_data.volume
+        self.hw.mixer.voice[1].level = config.volume_data.volume
 
         # Background
         color_bitmap = displayio.Bitmap(320, 240, 1)
@@ -229,11 +231,11 @@ class PlayState:
     @staticmethod
     def decorate_note(note: Note, note_sprite: TileGrid, sharp_sprite: TileGrid, flat_sprite: TileGrid, c_ledger_line: TileGrid, a_ledger_line: TileGrid, high_c_ledger_line: TileGrid, e_ledger_line: TileGrid):
         if note is not None:
-            if note.accidental is Accidental.SHARP and sharp_sprite.y == PlayState.OFF_SCREEN_Y:
+            if note.accidental is Accidental.SHARP:
                 sharp_sprite.y = note_sprite.y + 36
             elif note.accidental is not Accidental.SHARP:
                 sharp_sprite.y = PlayState.OFF_SCREEN_Y
-            if note.accidental is Accidental.FLAT and flat_sprite.y == PlayState.OFF_SCREEN_Y:
+            if note.accidental is Accidental.FLAT:
                 flat_sprite.y = note_sprite.y + 24
             elif note.accidental is not Accidental.FLAT:
                 flat_sprite.y = PlayState.OFF_SCREEN_Y

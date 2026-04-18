@@ -19,7 +19,6 @@ class ScaleDrillState(PlayState):
         super().__init__(hardware, config, title=self.drill_name)
 
         self.config = config
-
         # Scoring attributes
         self.total_score = 0
         self.note_start_time = None
@@ -41,11 +40,11 @@ class ScaleDrillState(PlayState):
 
         note_names = payload.get("notes", [])
         self.notes = [Notes.get_note_by_name(name) for name in note_names if Notes.get_note_by_name(name) is not None]
-        self.random_notes = []
+        temp_notes = [note for note in self.notes]
+        random_notes = []
         for i in range(len(self.notes)):
-            self.random_notes.append(random.choice(self.notes))
-
-        self.notes += self.random_notes
+            random_notes.append(temp_notes.pop(random.randint(0, len(temp_notes) - 1)))
+        self.notes += random_notes
 
         # set up drill note display
         drill_note_bitmap, drill_note_palette = adafruit_imageload.load(
@@ -54,7 +53,7 @@ class ScaleDrillState(PlayState):
             palette=displayio.Palette
         )
         drill_note_palette.make_transparent(1)
-        drill_note_palette[0] = 0x00AA00
+        drill_note_palette[0] = self.config.color_data.drill_note_color
         self.drill_note_sprite = displayio.TileGrid(drill_note_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 60,
                                               y=PlayState.OFF_SCREEN_Y)
         self.ui_group.append(self.drill_note_sprite)
@@ -142,7 +141,7 @@ class ScaleDrillState(PlayState):
                         self.note_start_time = self.note_played_time
 
                     reaction_time = self.note_played_time - self.note_start_time
-                    score = int(max(0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * 100)
+                    score = int(max(0.0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * 100)
                     self.total_score += score
                     self.score_label.text = str(self.total_score)
 

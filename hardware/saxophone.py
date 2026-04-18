@@ -40,6 +40,7 @@ class SaxHardware:
         )
         self.display = adafruit_ili9341.ILI9341(self.display_bus, width=320, height=240)
         print("Display initialized!")
+
         # --- Audio Setup ---
         print("Initializing audio...")
         # Set up the I2S Bus

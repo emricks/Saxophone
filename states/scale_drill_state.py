@@ -135,7 +135,7 @@ class ScaleDrillState(PlayState):
 
             # 2. VALIDATION: Have they held it long enough to earn the score?
             if self.note_played_time is not None:
-                if current_time - self.note_played_time >= 1.0:
+                if current_time - self.note_played_time >= 0.75:
                     # SUCCESS! Now we calculate and award the score
                     if self.note_start_time is None:
                         self.note_start_time = self.note_played_time
@@ -156,7 +156,7 @@ class ScaleDrillState(PlayState):
                         self.hint_task = None
                     
                     if self.current_hint_fingering is not None:
-                        self.clear_specific_fingering(self.current_hint_fingering)
+                        await self.clear_specific_fingering(self.current_hint_fingering)
                         self.current_hint_fingering = None
 
                     # Move to next note and reset state
@@ -178,7 +178,7 @@ class ScaleDrillState(PlayState):
             self.hint_task.cancel()
             
         if self.current_hint_fingering is not None:
-            self.clear_specific_fingering(self.current_hint_fingering)
+            await self.clear_specific_fingering(self.current_hint_fingering)
             self.current_hint_fingering = None
 
         self.hw.stop_note()
@@ -192,17 +192,17 @@ class ScaleDrillState(PlayState):
             # if only 1 fingering, just show it permanently
             if len(fingerings) == 1:
                 self.current_hint_fingering = fingerings[0]
-                self.blit_specific_fingering(self.current_hint_fingering)
+                await self.blit_specific_fingering(self.current_hint_fingering)
                 while True:
                     await asyncio.sleep(1.0)
             else:
                 while True:
                     for fingering in fingerings:
                         if self.current_hint_fingering is not None:
-                            self.clear_specific_fingering(self.current_hint_fingering)
+                            await self.clear_specific_fingering(self.current_hint_fingering)
                         
                         self.current_hint_fingering = fingering
-                        self.blit_specific_fingering(self.current_hint_fingering)
+                        await self.blit_specific_fingering(self.current_hint_fingering)
                         await asyncio.sleep(2.0)
         except asyncio.CancelledError:
             pass # Task was intentionally canceled because the user got the note right

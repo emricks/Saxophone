@@ -254,7 +254,7 @@ class PlayState:
             elif note not in Notes.E_LINE:
                 e_ledger_line.y = PlayState.OFF_SCREEN_Y
 
-    def clear_specific_fingering(self, fingering):
+    async def clear_specific_fingering(self, fingering):
         if fingering:
             for button in fingering:
                 if button.bounding_box:
@@ -263,8 +263,9 @@ class PlayState:
                                      x2=box.calculate_width(),
                                      y2=box.calculate_height(),
                                      skip_dest_index=1)
+                    await asyncio.sleep(0)
 
-    def blit_specific_fingering(self, fingering):
+    async def blit_specific_fingering(self, fingering):
         if fingering:
             for button in fingering:
                 if button.bounding_box:
@@ -273,3 +274,4 @@ class PlayState:
                                      x2=box.calculate_width(),
                                      y2=box.calculate_height(),
                                      skip_dest_index=1)
+                    await asyncio.sleep(0)

@@ -72,9 +72,9 @@ class Notes:
     }, staff_y_coord=88)
 
     C_5 = Note(name="C_5", midi_number=63, fingerings={
-        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C),
         (Buttons.L_2,),
-        (Buttons.L_1, Buttons.R_C)
+        (Buttons.L_1, Buttons.R_C),
+        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C)
     }, staff_y_coord=77)
     C_SHARP_5 = Note(name="C_SHARP_5", midi_number=64, fingerings={
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_C_SHARP),

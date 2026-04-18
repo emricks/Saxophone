@@ -60,15 +60,15 @@ class Notes:
         (Buttons.L_1, Buttons.L_2)
     }, staff_y_coord=99)
     B_FLAT_4 = Note(name="B_FLAT_4", midi_number=61, fingerings={
-        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B_FLAT),
-        (Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
-        (Buttons.L_1, Buttons.L_B_FLAT),
         (Buttons.L_1, Buttons.R_1),
         (Buttons.L_1, Buttons.R_2),
+        (Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
+        (Buttons.L_1, Buttons.L_B_FLAT),
+        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B_FLAT),
     }, staff_y_coord=88, accidental=Accidental.FLAT)
     B_4 = Note(name="B_4", midi_number=62, fingerings={
+        (Buttons.L_1,),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B),
-        (Buttons.L_1,)
     }, staff_y_coord=88)
 
     C_5 = Note(name="C_5", midi_number=63, fingerings={
@@ -77,8 +77,8 @@ class Notes:
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C)
     }, staff_y_coord=77)
     C_SHARP_5 = Note(name="C_SHARP_5", midi_number=64, fingerings={
+        tuple(),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_C_SHARP),
-        tuple()
     }, staff_y_coord=77, accidental=Accidental.SHARP)
     D_5 = Note(name="D_5", midi_number=65, fingerings={
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3)
@@ -106,10 +106,11 @@ class Notes:
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2)
     }, staff_y_coord=22)
     B_FLAT_5 = Note(name="B_FLAT_5", midi_number=73, fingerings={
-        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
-        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_B_FLAT),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_1),
-        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_2)
+        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_2),
+        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_B_FLAT),
+        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
+
     }, staff_y_coord=11, accidental=Accidental.FLAT)
     B_5 = Note(name="B_5", midi_number=74, fingerings={
         (Buttons.L_OCTAVE, Buttons.L_1)
@@ -133,8 +134,8 @@ class Notes:
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_3, Buttons.L_FRONT_F)
     }, staff_y_coord=-22)
     F_6 = Note(name="F_6", midi_number=80, fingerings={
+        (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F),
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT, Buttons.L_F, Buttons.R_E),
-        (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F)
     }, staff_y_coord=-33)
     F_SHARP_6 = Note(name="F_SHARP_6", midi_number=81, fingerings={
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F, Buttons.R_HIGH_F_SHARP)

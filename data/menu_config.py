@@ -12,26 +12,27 @@ MAIN_MENU = {
                     "items": [
                         {
                             "text": "C Major Scale",
-                            "type": "menu",
-                            "items": [
-                                {
-                                    "text": "In Order",
-                                    "type": "scale_drill",
-                                    "payload": {
-                                        "name": "C Major",
-                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
-                                    }
-                                },
-                                {
-                                    "text": "Random",
-                                    "type": "scale_drill",
-                                    "payload": {
-                                        "name": "C Major (Random)",
-                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
-                                    }
-                                },
-                                {"text": "< Back", "type": "back"}
-                            ]
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "C Major",
+                                "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
+                            }
+                        },
+                        {
+                            "text": "D Major Scale",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "D Major",
+                                "notes": ["D_4", "E_4", "F_SHARP_4", "G_4", "A_4", "B_4", "C_SHARP_5", "D_5"]
+                            }
+                        },
+                        {
+                            "text": "E Major Scale",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "E Major",
+                                "notes": ["E_4", "F_SHARP_4", "A_FLAT_4", "A_4", "B_4", "C_SHARP_5", "E_FLAT_5", "E_5"]
+                            }
                         },
                         {"text": "< Back", "type": "back"}
                     ]

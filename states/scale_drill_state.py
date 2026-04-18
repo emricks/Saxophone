@@ -41,11 +41,11 @@ class ScaleDrillState(PlayState):
 
         note_names = payload.get("notes", [])
         self.notes = [Notes.get_note_by_name(name) for name in note_names if Notes.get_note_by_name(name) is not None]
-        self.random_notes = []
+        temp_notes = [note for note in self.notes]
+        random_notes = []
         for i in range(len(self.notes)):
-            self.random_notes.append(random.choice(self.notes))
-
-        self.notes += self.random_notes
+            random_notes.append(temp_notes.pop(random.randint(0, len(temp_notes) - 1)))
+        self.notes += random_notes
 
         # set up drill note display
         drill_note_bitmap, drill_note_palette = adafruit_imageload.load(

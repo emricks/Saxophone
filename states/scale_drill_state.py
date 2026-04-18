@@ -4,6 +4,8 @@ import time
 
 import adafruit_imageload
 import displayio
+import terminalio
+from adafruit_display_text import label
 
 from data.notes import Notes
 from hardware.buttons import Buttons
@@ -15,11 +17,24 @@ class ScaleDrillState(PlayState):
         self.drill_name = payload.get("name", "Unknown Drill")
         super().__init__(hardware, config, title=self.drill_name)
 
+        self.config = config
+
         # Scoring attributes
         self.total_score = 0
         self.note_start_time = None
         self.note_played_time = None
         self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
+
+        # Add Score Label
+        self.score_label = label.Label(
+            terminalio.FONT,
+            text="0",
+            color=config.color_data.fg_color,
+            scale=2,
+        )
+        self.score_label.anchor_point = (0.5, 0.0)
+        self.score_label.anchored_position = (160, 5)
+        self.ui_group.append(self.score_label)
 
         note_names = payload.get("notes", [])
         self.notes = [Notes.get_note_by_name(name) for name in note_names if Notes.get_note_by_name(name) is not None]
@@ -88,8 +103,7 @@ class ScaleDrillState(PlayState):
             self.hw.update_button_states()
 
             if Buttons.L_SELECT.just_pressed or drill_note_index == len(self.notes):
-                # exit if select button pressed
-                self.is_running = False
+                # exit if select button pressed or finished
                 break
 
             # show current drill note
@@ -121,22 +135,107 @@ class ScaleDrillState(PlayState):
                         self.note_start_time = self.note_played_time
 
                     reaction_time = self.note_played_time - self.note_start_time
-                    score = max(0, self.MAX_POSSIBLE_PER_NOTE - reaction_time)
+                    score = int(max(0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * 100)
                     self.total_score += score
+                    self.score_label.text = str(self.total_score)
 
-                    print(f"Success! Score awarded: {score:.2f}")
+                    # Spawn the animation task
+                    asyncio.create_task(self.animate_score_text())
+
+                    print(f"Success! Score awarded: {score}")
 
                     # Move to next note and reset state
                     drill_note_index += 1
                     self.note_start_time = time.monotonic()
                     self.note_played_time = None
-                    print(f"Moving to next note. Total score so far: {self.total_score:.2f}")
+                    print(f"Moving to next note. Total score so far: {self.total_score}")
 
             # yield control for other code to run
             await asyncio.sleep(0.001)
 
         self.hw.stop_note()
-        print(f"Drill finished! Final total score: {self.total_score:.2f}")
+
+        if drill_note_index == len(self.notes):
+            await self.show_scoreboard()
+
+    def get_score_message(self, score):
+        # A dictionary/list mapping thresholds to messages
+        score_ranges = [
+            (6000, "Perfecto!"),
+            (5000, "You're a pro!"),
+            (4000, "Great job!"),
+            (3000, "Good effort!"),
+            (1000, "No pain, no gain!")
+        ]
+
+        for threshold, message in score_ranges:
+            if score >= threshold:
+                return message
+        return "Keep practicing!"
+
+    async def show_scoreboard(self):
+        # Clear UI for scoreboard
+        while len(self.ui_group) > 0:
+            self.ui_group.pop()
+
+        # Add Background
+        color_bitmap = displayio.Bitmap(320, 240, 1)
+        color_palette = displayio.Palette(1)
+        color_palette[0] = self.config.color_data.bg_color
+        bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
+        self.ui_group.append(bg_sprite)
+
+        title_label = label.Label(
+            terminalio.FONT,
+            text="Your Score",
+            color=self.config.color_data.fg_color,
+            scale=3,
+        )
+        title_label.anchor_point = (0.5, 0.5)
+        title_label.anchored_position = (160, 60)
+        self.ui_group.append(title_label)
+
+        score_value_label = label.Label(
+            terminalio.FONT,
+            text=str(self.total_score),
+            color=0xFFFF00,  # Yellow highlight
+            scale=4,
+        )
+        score_value_label.anchor_point = (0.5, 0.5)
+        score_value_label.anchored_position = (160, 120)
+        self.ui_group.append(score_value_label)
+
+        msg_label = label.Label(
+            terminalio.FONT,
+            text=self.get_score_message(self.total_score),
+            color=self.config.color_data.fg_color,
+            scale=2,
+        )
+        msg_label.anchor_point = (0.5, 0.5)
+        msg_label.anchored_position = (160, 180)
+        self.ui_group.append(msg_label)
+
+        # Wait for the user to press SELECT to exit
+        while self.is_running:
+            self.hw.update_button_states()
+            if Buttons.L_SELECT.just_pressed:
+                self.is_running = False
+                break
+            await asyncio.sleep(0.01)
+
+    async def animate_score_text(self):
+        flash_color = 0xAAFF00  # Yellow
+        flash_scale = 3
+        original_color = self.config.color_data.fg_color
+        original_scale = self.score_label.scale
+
+        for _ in range(4):
+            self.score_label.color = flash_color
+            self.score_label.scale = flash_scale
+            await asyncio.sleep(0.1)
+            self.score_label.color = original_color
+            self.score_label.scale = original_scale
+            await asyncio.sleep(0.1)
 
     def draw_drill_note(self, note):
         self.drill_note_sprite.y = note.staff_y_coord

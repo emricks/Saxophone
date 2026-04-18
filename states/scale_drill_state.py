@@ -24,6 +24,8 @@ class ScaleDrillState(PlayState):
         self.note_start_time = None
         self.note_played_time = None
         self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
+        self.hint_task = None
+        self.current_hint_fingering = None
 
         # Add Score Label
         self.score_label = label.Label(
@@ -95,6 +97,9 @@ class ScaleDrillState(PlayState):
     async def run(self):
         drill_note_index = 0
         self.note_start_time = time.monotonic()
+        
+        if self.chart_sprite not in self.ui_group:
+            self.ui_group.append(self.chart_sprite)
 
         while self.is_running:
             if self.hw.display.root_group != self.ui_group:
@@ -106,8 +111,9 @@ class ScaleDrillState(PlayState):
                 # exit if select button pressed or finished
                 break
 
+            current_note = self.notes[drill_note_index]
             # show current drill note
-            self.draw_drill_note(self.notes[drill_note_index])
+            self.draw_drill_note(current_note)
 
             # show playing note
             target_note = self.hw.get_current_note()
@@ -117,7 +123,7 @@ class ScaleDrillState(PlayState):
             current_time = time.monotonic()
 
             # 1. DETECTION: Did they start playing the right note?
-            if target_note == self.notes[drill_note_index] and breathing:
+            if target_note == current_note and breathing:
                 if self.note_played_time is None:
                     self.note_played_time = current_time
                     # print(f"Note started! Waiting for 1s hold...")
@@ -144,19 +150,62 @@ class ScaleDrillState(PlayState):
 
                     print(f"Success! Score awarded: {score}")
 
+                    # Cancel hint cycle if it's running
+                    if self.hint_task is not None:
+                        self.hint_task.cancel()
+                        self.hint_task = None
+                    
+                    if self.current_hint_fingering is not None:
+                        self.clear_specific_fingering(self.current_hint_fingering)
+                        self.current_hint_fingering = None
+
                     # Move to next note and reset state
                     drill_note_index += 1
                     self.note_start_time = time.monotonic()
                     self.note_played_time = None
                     print(f"Moving to next note. Total score so far: {self.total_score}")
+            
+            # 3. HINT: If they are taking too long, start cycling the fingerings
+            if self.hint_task is None and self.note_start_time is not None:
+                if time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE:
+                    self.hint_task = asyncio.create_task(self.cycle_fingerings(current_note))
 
             # yield control for other code to run
             await asyncio.sleep(0.001)
+
+        # Cancel any leftover hint tasks upon exiting
+        if self.hint_task is not None:
+            self.hint_task.cancel()
+            
+        if self.current_hint_fingering is not None:
+            self.clear_specific_fingering(self.current_hint_fingering)
+            self.current_hint_fingering = None
 
         self.hw.stop_note()
 
         if drill_note_index == len(self.notes):
             await self.show_scoreboard()
+
+    async def cycle_fingerings(self, note):
+        fingerings = list(note.button_fingerings)
+        try:
+            # if only 1 fingering, just show it permanently
+            if len(fingerings) == 1:
+                self.current_hint_fingering = fingerings[0]
+                self.blit_specific_fingering(self.current_hint_fingering)
+                while True:
+                    await asyncio.sleep(1.0)
+            else:
+                while True:
+                    for fingering in fingerings:
+                        if self.current_hint_fingering is not None:
+                            self.clear_specific_fingering(self.current_hint_fingering)
+                        
+                        self.current_hint_fingering = fingering
+                        self.blit_specific_fingering(self.current_hint_fingering)
+                        await asyncio.sleep(2.0)
+        except asyncio.CancelledError:
+            pass # Task was intentionally canceled because the user got the note right
 
     def get_score_message(self, score):
         # A dictionary/list mapping thresholds to messages
@@ -224,7 +273,7 @@ class ScaleDrillState(PlayState):
             await asyncio.sleep(0.01)
 
     async def animate_score_text(self):
-        flash_color = 0xAAFF00  # Yellow
+        flash_color = 0xFFA500
         flash_scale = 3
         original_color = self.config.color_data.fg_color
         original_scale = self.score_label.scale

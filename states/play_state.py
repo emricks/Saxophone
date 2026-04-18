@@ -253,3 +253,23 @@ class PlayState:
                 e_ledger_line.y = PlayState.E_LEDGER_LINE_Y
             elif note not in Notes.E_LINE:
                 e_ledger_line.y = PlayState.OFF_SCREEN_Y
+
+    def clear_specific_fingering(self, fingering):
+        if fingering:
+            for button in fingering:
+                if button.bounding_box:
+                    box = button.bounding_box
+                    bitmaptools.blit(self.chart_sprite.bitmap, self.unblit_bitmap, x=box.x0, y=box.y0, x1=0, y1=0,
+                                     x2=box.calculate_width(),
+                                     y2=box.calculate_height(),
+                                     skip_dest_index=1)
+
+    def blit_specific_fingering(self, fingering):
+        if fingering:
+            for button in fingering:
+                if button.bounding_box:
+                    box = button.bounding_box
+                    bitmaptools.blit(self.chart_sprite.bitmap, self.blit_bitmap, x=box.x0, y=box.y0, x1=0, y1=0,
+                                     x2=box.calculate_width(),
+                                     y2=box.calculate_height(),
+                                     skip_dest_index=1)

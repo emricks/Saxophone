@@ -2,6 +2,7 @@
 import array
 import board
 import busio
+import asyncio
 import digitalio
 import displayio
 import fourwire
@@ -18,7 +19,7 @@ from data.notes import note_from_mask
 
 
 class SaxHardware:
-    NOTE_RELEASE_TIME = 0.1
+    NOTE_RELEASE_TIME = 0.05
 
     def __init__(self):
         displayio.release_displays()
@@ -114,9 +115,13 @@ class SaxHardware:
     async def start_hardware(self):
         await self.breath_sensor.start()
 
-    def stop_note(self):
-        """Releases all active notes to trigger the fade-out envelope."""
+    async def stop_note(self):
+        """Releases all active notes and waits for the sound to fade out completely."""
         self.synth.release_all()
+        # Wait for the duration of the release envelope to ensure
+        # the sound has fully stopped before proceeding.
+        await asyncio.sleep(self.NOTE_RELEASE_TIME)
+
 
     def play_note(self, midi_number):
         """Converts a MIDI integer to Hertz and plays it with the sax waveform."""

@@ -186,7 +186,7 @@ class PlayState:
             self.ui_group.append(self.chart_sprite)
 
         self.current_note_playing = None
-        self.hw.stop_note()
+        await self.hw.stop_note()
         await self.hide_notes()
 
         while self.is_running:
@@ -203,19 +203,19 @@ class PlayState:
             await asyncio.sleep(0.001)
 
         # STOP AUDIO: Release notes before exiting the loop
-        self.hw.stop_note()
+        await self.hw.stop_note()
 
     async def process_playing_note(self, note):
         breathing = self.hw.breath_sensor.breath_sensor_triggered
         if note is None or not breathing:
-            self.hw.stop_note()
+            await self.hw.stop_note()
             await self.hide_notes()
             self.current_note_playing = None
             return
 
         # 3. Apply changes if the note changed
         if note != self.current_note_playing:
-            self.hw.stop_note()
+            await self.hw.stop_note()
             await self.hide_notes()
 
             if note is not None:

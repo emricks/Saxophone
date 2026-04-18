@@ -263,7 +263,7 @@ class PlayState:
                                      x2=box.calculate_width(),
                                      y2=box.calculate_height(),
                                      skip_dest_index=1)
-                    await asyncio.sleep(0)
+                    await asyncio.sleep(0.001)
 
     async def blit_specific_fingering(self, fingering):
         if fingering:
@@ -274,4 +274,4 @@ class PlayState:
                                      x2=box.calculate_width(),
                                      y2=box.calculate_height(),
                                      skip_dest_index=1)
-                    await asyncio.sleep(0)
+                    await asyncio.sleep(0.001)

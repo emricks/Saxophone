@@ -167,7 +167,7 @@ class ScaleDrillState(PlayState):
             
             # 3. HINT: If they are taking too long, start cycling the fingerings
             if self.hint_task is None and self.note_start_time is not None:
-                if time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE:
+                if time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2:
                     self.hint_task = asyncio.create_task(self.cycle_fingerings(current_note))
 
             # yield control for other code to run
@@ -278,7 +278,7 @@ class ScaleDrillState(PlayState):
         original_color = self.config.color_data.fg_color
         original_scale = self.score_label.scale
 
-        for _ in range(4):
+        for _ in range(2):
             self.score_label.color = flash_color
             self.score_label.scale = flash_scale
             await asyncio.sleep(0.1)

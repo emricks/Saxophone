@@ -60,23 +60,36 @@ MAIN_MENU = {
                             "bg_color": 0x000000,
                             "fg_color": 0x00FE03,
                             "chart_color": 0x00FE03,
-                            "fingering_color": 0xFF01FC
+                            "fingering_color": 0xFF01FC,
+                            "test_note_color": 0xFF6000
                         }},
                         {"text": "Christmas", "type": "color", "payload": {
                             "name": "Christmas",
-                            "bg_color": 0xFF4444,
-                            "fg_color": 0x00BB00,
-                            "chart_color": 0x00BB00,
-                            "fingering_color": 0xFFFF00
+                            "bg_color": 0xFF2222,
+                            "fg_color": 0x00DD00,
+                            "chart_color": 0x00DD00,
+                            "fingering_color": 0xFFFF80,
+                            "test_note_color": 0xCCCCCC
                         }},
                         {"text": "Default", "type": "color", "payload": {
                             "name": "Default",
                             "bg_color": 0x0000FF,
                             "fg_color": 0xFFFFFF,
                             "chart_color": 0xFFFFFF,
-                            "fingering_color": 0xFF0000
+                            "fingering_color": 0xFF0000,
+                            "test_note_color": 0x00FF00
                         }},
                         {"text": "> Back", "type": "back"}
+                    ]
+                },
+                {
+                    "text": "Volume",
+                    "type": "menu",
+                    "items": [
+                        {
+                            "text": "Coming Soon"
+                        },
+                        {"text": "< Back", "type": "back"}
                     ]
                 },
                 {"text": "< Back", "type": "back"}

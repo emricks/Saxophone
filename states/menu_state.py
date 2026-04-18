@@ -59,7 +59,8 @@ class MenuState:
                         fg_color=payload.get("fg_color"),
                         bg_color=payload.get("bg_color"),
                         chart_color=payload.get("chart_color"),
-                        fingering_color=payload.get("fingering_color")
+                        fingering_color=payload.get("fingering_color"),
+                        test_note_color=payload.get("test_note_color")
                     )
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})

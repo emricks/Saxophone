@@ -4,6 +4,7 @@ import time
 
 import adafruit_imageload
 import displayio
+import gifio
 import terminalio
 from adafruit_display_text import label
 
@@ -181,7 +182,7 @@ class ScaleDrillState(PlayState):
             await self.clear_specific_fingering(self.current_hint_fingering)
             self.current_hint_fingering = None
 
-        self.hw.stop_note()
+        await self.hw.stop_note()
 
         if drill_note_index == len(self.notes):
             await self.show_scoreboard()
@@ -208,31 +209,61 @@ class ScaleDrillState(PlayState):
             pass # Task was intentionally canceled because the user got the note right
 
     def get_score_message(self, score):
-        # A dictionary/list mapping thresholds to messages
+        # A dictionary/list mapping thresholds to messages and GIFs
         score_ranges = [
-            (6000, "Perfecto!"),
-            (5000, "You're a pro!"),
-            (4000, "Great job!"),
-            (3000, "Good effort!"),
-            (1000, "No pain, no gain!")
+            (6000, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
+            (5000, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
+            (4000, {"message": "Great job!", "gif": "data/gif/party.gif"}),
+            (3000, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
+            (1000, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
         ]
 
-        for threshold, message in score_ranges:
+        for threshold, data in score_ranges:
             if score >= threshold:
-                return message
-        return "Keep practicing!"
+                return data
+        return {"message": "Keep practicing!", "gif": "data/gif/tough.gif"}
 
     async def show_scoreboard(self):
         # Clear UI for scoreboard
         while len(self.ui_group) > 0:
             self.ui_group.pop()
 
-        # Add Background
+        score_data = self.get_score_message(self.total_score)
+
+        # Always add a solid background first
         color_bitmap = displayio.Bitmap(320, 240, 1)
         color_palette = displayio.Palette(1)
         color_palette[0] = self.config.color_data.bg_color
         bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
         self.ui_group.append(bg_sprite)
+
+        # Add GIF on top of the background, in the middle
+        gif_path = score_data["gif"]
+        try:
+            gif = gifio.OnDiskGif(gif_path)
+            gif.next_frame() # Load the first frame
+            
+            # Center the 100x100 gif horizontally, position vertically between score and message
+            screen_w = 320
+            x_offset = max(0, (screen_w - gif.width) // 2)
+            y_offset = 95
+            
+            gif_sprite = displayio.TileGrid(
+                gif.bitmap,
+                pixel_shader=displayio.ColorConverter(
+                    input_colorspace=displayio.Colorspace.RGB565_SWAPPED
+                ),
+                width=1, 
+                height=1, 
+                tile_width=gif.width, 
+                tile_height=gif.height,
+                x=x_offset,
+                y=y_offset
+            )
+            self.ui_group.append(gif_sprite)
+        except Exception as e:
+            print(f"Could not load GIF {gif_path}: {e}")
+            gif = None
 
         title_label = label.Label(
             terminalio.FONT,
@@ -241,7 +272,7 @@ class ScaleDrillState(PlayState):
             scale=3,
         )
         title_label.anchor_point = (0.5, 0.5)
-        title_label.anchored_position = (160, 60)
+        title_label.anchored_position = (160, 30)
         self.ui_group.append(title_label)
 
         score_value_label = label.Label(
@@ -251,17 +282,17 @@ class ScaleDrillState(PlayState):
             scale=4,
         )
         score_value_label.anchor_point = (0.5, 0.5)
-        score_value_label.anchored_position = (160, 120)
+        score_value_label.anchored_position = (160, 65)
         self.ui_group.append(score_value_label)
 
         msg_label = label.Label(
             terminalio.FONT,
-            text=self.get_score_message(self.total_score),
+            text=score_data["message"],
             color=self.config.color_data.fg_color,
             scale=2,
         )
         msg_label.anchor_point = (0.5, 0.5)
-        msg_label.anchored_position = (160, 180)
+        msg_label.anchored_position = (160, 215)
         self.ui_group.append(msg_label)
 
         # Wait for the user to press SELECT to exit
@@ -270,6 +301,10 @@ class ScaleDrillState(PlayState):
             if Buttons.L_SELECT.just_pressed:
                 self.is_running = False
                 break
+            
+            if gif is not None:
+                gif.next_frame()
+
             await asyncio.sleep(0.01)
 
     async def animate_score_text(self):

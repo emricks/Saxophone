@@ -1,7 +1,7 @@
 try:
     import board
 except ModuleNotFoundError:
-    # If the platform does not fully support circuitpython's board 
+    # If the platform does not fully support circuitpython's board
     # module (e.g. running in standard CPython on macOS for tests),
     # fake it so imports don't crash.
     class FakeBoard:
@@ -32,14 +32,14 @@ class ButtonDef:
     def __init__(self, hw_source, hw_pin, bounding_box: BoundingBox = None, is_fingering=True):
         self.hw_source = hw_source  # e.g., 'ONBOARD' or 'MCP'
         self.hw_pin = hw_pin  # board.D11 or MCP pin integer (0, 1, etc.)
-        
+
         if is_fingering:
             # Automatically assign the next available unique bit for this button
             self.fingering_bit = ButtonDef._next_fingering_bit
             ButtonDef._next_fingering_bit += 1
         else:
             self.fingering_bit = None
-        
+
         self.is_pressed = False
         self.was_pressed = False
         self.bounding_box = bounding_box

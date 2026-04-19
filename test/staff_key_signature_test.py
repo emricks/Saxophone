@@ -22,10 +22,10 @@ def test_staff_key_signature():
 
     # 4. Create the Staff object, passing the key signature
     staff = Staff(width=160, config=config, key_signature=key_sig)
-    
+
     # Center the staff vertically
     staff.y = (200 - Staff.HEIGHT) // 2
-    
+
     # 5. Mount it on the display
     if isinstance(display.root_group, displayio.Group):
         display.root_group.append(staff)

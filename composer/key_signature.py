@@ -19,13 +19,13 @@ class KeySignature:
         for note in self.notes:
             if note.accidental is not None:
                 accidentals.append(note)
-                
+
         # Sort them by standard Key Signature order.
         # Sharps order: F, C, G, D, A, E, B
         # Flats order: B, E, A, D, G, C, F
         sharp_order = {"F": 0, "C": 1, "G": 2, "D": 3, "A": 4, "E": 5, "B": 6}
         flat_order = {"B": 0, "E": 1, "A": 2, "D": 3, "G": 4, "C": 5, "F": 6}
-        
+
         def sort_key(note):
             base_name = note.name.split("_")[0]
             if note.accidental == "sharp":

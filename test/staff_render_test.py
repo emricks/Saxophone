@@ -17,11 +17,11 @@ def test_staff_static_lines():
 
     # 3. Create the Staff object (which inherits from displayio.Group)
     staff = Staff(width=160, config=config)
-    
+
     # Let's center the staff vertically on the 200px tall display just so it looks nice
     staff.y = (display.height - staff.height) // 2
     staff.x = (display.width - staff.width) // 2
-    
+
     display.root_group.append(staff)
 
     # 5. View it

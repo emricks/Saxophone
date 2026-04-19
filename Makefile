@@ -13,7 +13,7 @@ deploy:
 deps:
 	@echo "Installing CircuitPython stubs and hardware libraries..."
 	pip install --upgrade pip
-	pip install circuitpython-stubs adafruit-circuitpython-ili9341 adafruit-circuitpython-mcp230xx adafruit-circuitpython-imageload adafruit-circuitpython-display-text adafruit-circuitpython-bmp3xx circup
+	pip install circuitpython-stubs adafruit-circuitpython-ili9341 adafruit-circuitpython-mcp230xx blinka-displayio-pygamedisplay adafruit-circuitpython-imageload adafruit-circuitpython-display-text adafruit-circuitpython-bmp3xx circup
 	@echo "Dependencies installed! (Make sure PyCharm's virtual environment is active)"
 
 setup-device: deps

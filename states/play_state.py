@@ -4,25 +4,18 @@ import displayio
 import terminalio
 import adafruit_imageload
 from adafruit_display_text import label
-from displayio import TileGrid
 
+from composer.key_signature import KeySignature, KeySignatures
+from composer.notes import Duration, Notes as ComposerNotes
+from composer.staff import Staff
 from data.config import Config
-from data.notes import Accidental, Notes, Note
 from hardware.buttons import Buttons
 from hardware.saxophone import SaxHardware
 
 
 class PlayState:
-    OFF_SCREEN_Y = 240
-    C_LEDGER_LINE_Y = 208
-    A_LEDGER_LINE_Y = 76
-    HIGH_C_LEDGER_LINE_Y = 54
-    E_LEDGER_LINE_Y = 32
-
-    STAFF_Y = (240 // 2) - (69 // 2) + 11  # Center vertically, move down to allow more room for notes
-    STAFF_X_START = 32  # Start a bit in from the left
-
-    def __init__(self, hardware, config: Config, title="Free Play"):
+    STAFF_WIDTH = 212
+    def __init__(self, hardware, config: Config, title="Free Play", key_signature: KeySignature = KeySignatures.C_MAJOR):
         self.hw = hardware
         self.is_running = True
         self.current_note_playing = None
@@ -48,85 +41,12 @@ class PlayState:
             y=15
         )
         self.ui_group.append(self.title_label)
-        
-        # Load Staff Lines
-        staff_bitmap, staff_palette = adafruit_imageload.load(
-            "data/img/staff_lines_white.png", 
-            bitmap=displayio.Bitmap, 
-            palette=displayio.Palette
-        )
-        # Make color index 1 transparent
-        staff_palette.make_transparent(1)
-        staff_palette[0] = config.color_data.fg_color
-        
-        # Two copies of the staff side-by-side, centered vertically
-        self.staff_1 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=PlayState.STAFF_X_START, y=PlayState.STAFF_Y)
-        self.staff_2 = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=PlayState.STAFF_X_START + 60, y=PlayState.STAFF_Y)
-        self.ui_group.append(self.staff_1)
-        self.ui_group.append(self.staff_2)
 
-        # use staff for ledger lines
-        self.c_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        self.a_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        self.high_c_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        self.e_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=staff_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-
-        self.ui_group.append(self.c_ledger_line)
-        self.ui_group.append(self.a_ledger_line)
-        self.ui_group.append(self.high_c_ledger_line)
-        self.ui_group.append(self.e_ledger_line)
-
-        # Load Treble Clef (36x72)
-        clef_bitmap, clef_palette = adafruit_imageload.load(
-            "data/img/treble_clef_white.png",
-            bitmap=displayio.Bitmap, 
-            palette=displayio.Palette
-        )
-        # Make color index 1 transparent
-        clef_palette.make_transparent(1)
-        clef_palette[0] = config.color_data.fg_color
-        
-        # Place treble clef on the far left of the staff
-        clef_y = PlayState.STAFF_Y - 2 # Minor adjustment to align with staff visually
-        self.treble_clef = displayio.TileGrid(clef_bitmap, pixel_shader=clef_palette, x=PlayState.STAFF_X_START - 20, y=clef_y)
-        self.ui_group.append(self.treble_clef)
-
-        # Load Half Note
-        note_bitmap, note_palette = adafruit_imageload.load(
-            "data/img/half_note_white.png",
-            bitmap=displayio.Bitmap, 
-            palette=displayio.Palette
-        )
-
-        # Make color index 1 transparent
-        note_palette.make_transparent(1)
-        note_palette[0] = config.color_data.fg_color
-        
-        # Place note on the staff (starting position will be updated in run)
-        self.note_sprite = displayio.TileGrid(note_bitmap, pixel_shader=note_palette, x=PlayState.STAFF_X_START + 60, y=PlayState.OFF_SCREEN_Y)
-        self.ui_group.append(self.note_sprite)
-
-        #Load sharp
-        sharp_bitmap, sharp_palette = adafruit_imageload.load(
-            "data/img/sharp_white.png",
-            bitmap=displayio.Bitmap,
-            palette=displayio.Palette
-        )
-        sharp_palette.make_transparent(1)
-        sharp_palette[0] = config.color_data.fg_color
-        self.sharp_sprite = displayio.TileGrid(sharp_bitmap, pixel_shader=sharp_palette, x=PlayState.STAFF_X_START + 40, y=PlayState.OFF_SCREEN_Y)
-        self.ui_group.append(self.sharp_sprite)
-
-        #Load flat
-        flat_bitmap, flat_palette = adafruit_imageload.load(
-            "data/img/flat_white.png",
-            bitmap=displayio.Bitmap,
-            palette=displayio.Palette
-        )
-        flat_palette.make_transparent(1)
-        flat_palette[0] = config.color_data.fg_color
-        self.flat_sprite = displayio.TileGrid(flat_bitmap, pixel_shader=flat_palette, x=PlayState.STAFF_X_START + 40, y=PlayState.OFF_SCREEN_Y)
-        self.ui_group.append(self.flat_sprite)
+        # Staff
+        self.staff = Staff(width=PlayState.STAFF_WIDTH, config=config, key_signature=key_signature)
+        self.staff.x = 0
+        self.staff.y = (240 - Staff.HEIGHT) // 2
+        self.ui_group.append(self.staff)
 
         # load chart
         chart_bitmap, chart_palette = adafruit_imageload.load(
@@ -153,15 +73,8 @@ class PlayState:
         unblit_palette[0] = config.color_data.chart_color
 
     async def hide_notes(self):
-        # remove notes visually at/after notes stop playing
         await asyncio.sleep(SaxHardware.NOTE_RELEASE_TIME)
-        self.note_sprite.y = PlayState.OFF_SCREEN_Y
-        self.sharp_sprite.y = PlayState.OFF_SCREEN_Y
-        self.flat_sprite.y = PlayState.OFF_SCREEN_Y
-        self.c_ledger_line.y = PlayState.OFF_SCREEN_Y
-        self.a_ledger_line.y = PlayState.OFF_SCREEN_Y
-        self.high_c_ledger_line.y = PlayState.OFF_SCREEN_Y
-        self.e_ledger_line.y = PlayState.OFF_SCREEN_Y
+        self.staff.update_sequence([])
 
     def update_chart(self):
         for button in Buttons.ALL:
@@ -177,8 +90,6 @@ class PlayState:
                                  x2=box.calculate_width(),
                                  y2=box.calculate_height(),
                                  skip_dest_index=1)
-
-
 
     async def run(self):
         if self.hw.display.root_group != self.ui_group:
@@ -199,62 +110,34 @@ class PlayState:
                 self.is_running = False
                 break
 
-            # 2. Handle Note Logic
             target_note = self.hw.get_current_note()
             await self.process_playing_note(target_note)
             await asyncio.sleep(0.001)
 
-        # STOP AUDIO: Release notes before exiting the loop
         await self.hw.stop_note()
 
     async def process_playing_note(self, note):
         breathing = self.hw.breath_sensor.breath_sensor_triggered
         if note is None or not breathing:
-            await self.hw.stop_note()
-            await self.hide_notes()
-            self.current_note_playing = None
+            if self.current_note_playing is not None:
+                await self.hw.stop_note()
+                await self.hide_notes()
+                self.current_note_playing = None
+                self.hw.display.refresh()
             return
 
-        # 3. Apply changes if the note changed
         if note != self.current_note_playing:
             await self.hw.stop_note()
             await self.hide_notes()
 
             if note is not None:
                 self.hw.play_note(note.midi_number)
-                self.note_sprite.y = note.staff_y_coord
-                self.decorate_note(note, self.note_sprite, self.sharp_sprite, self.flat_sprite, self.c_ledger_line, self.a_ledger_line, self.high_c_ledger_line, self.e_ledger_line)
+                composer_note = ComposerNotes.get_note_by_name(note.name)
+                if composer_note is not None:
+                    self.staff.show_note(composer_note, Duration.HALF)
 
             self.current_note_playing = note
-        self.hw.display.refresh()
-
-    @staticmethod
-    def decorate_note(note: Note, note_sprite: TileGrid, sharp_sprite: TileGrid, flat_sprite: TileGrid, c_ledger_line: TileGrid, a_ledger_line: TileGrid, high_c_ledger_line: TileGrid, e_ledger_line: TileGrid):
-        if note is not None:
-            if note.accidental is Accidental.SHARP:
-                sharp_sprite.y = note_sprite.y + 36
-            elif note.accidental is not Accidental.SHARP:
-                sharp_sprite.y = PlayState.OFF_SCREEN_Y
-            if note.accidental is Accidental.FLAT:
-                flat_sprite.y = note_sprite.y + 24
-            elif note.accidental is not Accidental.FLAT:
-                flat_sprite.y = PlayState.OFF_SCREEN_Y
-            if note in Notes.C_LINE and c_ledger_line.y == PlayState.OFF_SCREEN_Y:
-                c_ledger_line.y = PlayState.C_LEDGER_LINE_Y
-            elif note not in Notes.C_LINE:
-                c_ledger_line.y = PlayState.OFF_SCREEN_Y
-            if note in Notes.A_LINE and a_ledger_line.y == PlayState.OFF_SCREEN_Y:
-                a_ledger_line.y = PlayState.A_LEDGER_LINE_Y
-            elif note not in Notes.A_LINE:
-                a_ledger_line.y = PlayState.OFF_SCREEN_Y
-            if note in Notes.HIGH_C_LINE and high_c_ledger_line.y == PlayState.OFF_SCREEN_Y:
-                high_c_ledger_line.y = PlayState.HIGH_C_LEDGER_LINE_Y
-            elif note not in Notes.HIGH_C_LINE:
-                high_c_ledger_line.y = PlayState.OFF_SCREEN_Y
-            if note in Notes.E_LINE and e_ledger_line.y == PlayState.OFF_SCREEN_Y:
-                e_ledger_line.y = PlayState.E_LEDGER_LINE_Y
-            elif note not in Notes.E_LINE:
-                e_ledger_line.y = PlayState.OFF_SCREEN_Y
+            self.hw.display.refresh()
 
     async def clear_specific_fingering(self, fingering):
         if fingering:

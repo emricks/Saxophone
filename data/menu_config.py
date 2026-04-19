@@ -15,6 +15,7 @@ MAIN_MENU = {
                             "type": "scale_drill",
                             "payload": {
                                 "name": "C Major",
+                                "key_signature": "C_MAJOR",
                                 "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
                             }
                         },
@@ -23,6 +24,7 @@ MAIN_MENU = {
                             "type": "scale_drill",
                             "payload": {
                                 "name": "D Major",
+                                "key_signature": "D_MAJOR",
                                 "notes": ["D_4", "E_4", "F_SHARP_4", "G_4", "A_4", "B_4", "C_SHARP_5", "D_5"]
                             }
                         },
@@ -31,6 +33,7 @@ MAIN_MENU = {
                             "type": "scale_drill",
                             "payload": {
                                 "name": "E Major",
+                                "key_signature": "E_MAJOR",
                                 "notes": ["E_4", "F_SHARP_4", "A_FLAT_4", "A_4", "B_4", "C_SHARP_5", "E_FLAT_5", "E_5"]
                             }
                         },

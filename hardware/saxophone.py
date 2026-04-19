@@ -15,7 +15,7 @@ from adafruit_mcp230xx.mcp23017 import MCP23017
 
 from hardware.breath import BreathSensor
 from hardware.buttons import ButtonHardwareSource, Buttons
-from data.notes import note_from_mask
+from composer.notes import note_from_mask
 
 
 class SaxHardware:

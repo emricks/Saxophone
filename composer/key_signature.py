@@ -1,26 +1,19 @@
-from composer.notes import Notes
+from composer.notes import Note, Notes
 
 class KeySignature:
     """
     Represents a musical key signature.
-    Determines which notes are naturally sharp or flat, and provides 
+    Determines which notes are naturally sharp or flat, and provides
     the necessary logic to draw the correct accidentals on a staff.
     """
-    
-    # Standard circle of fifths ordering for drawing accidentals on a Treble Clef.
-    # The values represent the ledger line position relative to the staff lines.
-    # We will define the ledger line positions in the Staff class (or here) shortly.
-    
-    def __init__(self, key_name, notes=None):
-        self.key_name = key_name
-        self.notes = notes
-        self.accidentals = self._get_accidentals()
 
-        
-    def _get_accidentals(self):
-        """
-        Returns a list of accidentals required for this key signature.
-        """
+    def __init__(self, key_name: str, notes: list[Note] | None = None) -> None:
+        self.key_name = key_name
+        self.notes: list[Note] = notes or []
+        self.accidentals: list[Note] = self._get_accidentals()
+
+    def _get_accidentals(self) -> list[Note]:
+        """Returns the subset of key notes that carry an accidental, in standard staff order."""
         accidentals = []
 
         for note in self.notes:
@@ -45,6 +38,7 @@ class KeySignature:
         return accidentals
 
 class KeySignatures:
+    C_MAJOR = KeySignature("Cmaj", [])
     G_MAJOR = KeySignature("Gmaj", [Notes.F_SHARP_4])
     D_MAJOR = KeySignature("Dmaj", [Notes.F_SHARP_4, Notes.C_SHARP_4])
     A_MAJOR = KeySignature("Amaj", [Notes.F_SHARP_4, Notes.C_SHARP_4, Notes.G_SHARP_4])

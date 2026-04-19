@@ -1,24 +1,39 @@
 from hardware.buttons import Buttons
 
 class Accidental:
-    SHARP = "sharp"
-    FLAT = "flat"
-    NATURAL = "natural"
+    SHARP: str = "sharp"
+    FLAT: str = "flat"
+    NATURAL: str = "natural"
+
+class Duration:
+    WHOLE: str = "whole"
+    HALF: str = "half"
+    QUARTER: str = "quarter"
+    EIGHTH: str = "eighth"
+
+class Rest:
+    def __init__(self, duration: str) -> None:
+        self.duration = duration
 
 class Note:
-    def __init__(self, name, midi_number, fingerings, ledger_line, accidental=None):
+    def __init__(self, name: str, midi_number: int, fingerings: set, ledger_line: float, accidental: str | None = None) -> None:
         self.name = name
         self.midi_number = midi_number
         self.button_fingerings = fingerings
         self.ledger_line = ledger_line
         self.accidental = accidental
 
-        self.fingerings = set()
+        self.fingerings: set[int] = set()
         for button_group in fingerings:
             mask = 0
             for button in button_group:
                 mask |= (1 << button.fingering_bit)
             self.fingerings.add(mask)
+
+class TimedNote:
+    def __init__(self, note: Note, duration: str) -> None:
+        self.note = note
+        self.duration = duration
 
 class Notes:
     B_FLAT_3 = Note(name="B_FLAT_3", midi_number=49, fingerings={

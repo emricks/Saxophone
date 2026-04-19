@@ -2,13 +2,15 @@ import asyncio
 import random
 import time
 
-import adafruit_imageload
 import displayio
 import gifio
 import terminalio
 from adafruit_display_text import label
 
-from data.notes import Notes
+from composer.key_signature import KeySignatures
+from composer.notes import Duration, Notes as ComposerNotes
+from composer.staff import Staff
+from data.config import Config
 from hardware.buttons import Buttons
 from states.play_state import PlayState
 
@@ -16,7 +18,9 @@ from states.play_state import PlayState
 class ScaleDrillState(PlayState):
     def __init__(self, hardware, payload, config):
         self.drill_name = payload.get("name", "Unknown Drill")
-        super().__init__(hardware, config, title=self.drill_name)
+        key_sig_name = payload.get("key_signature", "C_MAJOR")
+        key_signature = getattr(KeySignatures, key_sig_name, KeySignatures.C_MAJOR)
+        super().__init__(hardware, config, title=self.drill_name, key_signature=key_signature)
 
         self.config = config
         # Scoring attributes
@@ -39,65 +43,28 @@ class ScaleDrillState(PlayState):
         self.ui_group.append(self.score_label)
 
         note_names = payload.get("notes", [])
-        self.notes = [Notes.get_note_by_name(name) for name in note_names if Notes.get_note_by_name(name) is not None]
+        self.notes = [ComposerNotes.get_note_by_name(name) for name in note_names if ComposerNotes.get_note_by_name(name) is not None]
         temp_notes = [note for note in self.notes]
         random_notes = []
         for i in range(len(self.notes)):
             random_notes.append(temp_notes.pop(random.randint(0, len(temp_notes) - 1)))
         self.notes += random_notes
 
-        # set up drill note display
-        drill_note_bitmap, drill_note_palette = adafruit_imageload.load(
-            "data/img/half_note_white.png",
-            bitmap=displayio.Bitmap,
-            palette=displayio.Palette
-        )
-        drill_note_palette.make_transparent(1)
-        drill_note_palette[0] = self.config.color_data.drill_note_color
-        self.drill_note_sprite = displayio.TileGrid(drill_note_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 60,
-                                              y=PlayState.OFF_SCREEN_Y)
-        self.ui_group.append(self.drill_note_sprite)
-
-        # Load Staff Lines
-        staff_bitmap, staff_palette = adafruit_imageload.load(
-            "data/img/staff_lines_white.png",
-            bitmap=displayio.Bitmap,
-            palette=displayio.Palette
-        )
-
-        # use staff for ledger lines
-        self.drill_c_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        self.drill_a_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        self.drill_high_c_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-        self.drill_e_ledger_line = displayio.TileGrid(staff_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 61, y=PlayState.OFF_SCREEN_Y, tile_width=32, tile_height=16)
-
-        self.ui_group.append(self.drill_c_ledger_line)
-        self.ui_group.append(self.drill_a_ledger_line)
-        self.ui_group.append(self.drill_high_c_ledger_line)
-        self.ui_group.append(self.drill_e_ledger_line)
-
-        #Load sharp
-        sharp_bitmap, sharp_palette = adafruit_imageload.load(
-            "data/img/sharp_white.png",
-            bitmap=displayio.Bitmap,
-            palette=displayio.Palette
-        )
-        self.drill_sharp_sprite = displayio.TileGrid(sharp_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 40, y=PlayState.OFF_SCREEN_Y)
-        self.ui_group.append(self.drill_sharp_sprite)
-
-        #Load flat
-        flat_bitmap, flat_palette = adafruit_imageload.load(
-            "data/img/flat_white.png",
-            bitmap=displayio.Bitmap,
-            palette=displayio.Palette
-        )
-        self.drill_flat_sprite = displayio.TileGrid(flat_bitmap, pixel_shader=drill_note_palette, x=PlayState.STAFF_X_START + 40, y=PlayState.OFF_SCREEN_Y)
-        self.ui_group.append(self.drill_flat_sprite)
+        # Drill note overlay staff (same position as play staff, no lines/clef, drill color)
+        drill_config = Config()
+        drill_config.color_data.fg_color = config.color_data.drill_note_color
+        self.drill_staff = Staff(width=PlayState.STAFF_WIDTH, config=drill_config, key_signature=key_signature)
+        self.drill_staff.x = self.staff.x
+        self.drill_staff.y = self.staff.y
+        while len(self.drill_staff.static_group) > 0:
+            self.drill_staff.static_group.pop()
+        self.ui_group.append(self.drill_staff)
 
     async def run(self):
         drill_note_index = 0
+        last_drawn_index = -1
         self.note_start_time = time.monotonic()
-        
+
         if self.chart_sprite not in self.ui_group:
             self.ui_group.append(self.chart_sprite)
 
@@ -112,8 +79,10 @@ class ScaleDrillState(PlayState):
                 break
 
             current_note = self.notes[drill_note_index]
-            # show current drill note
-            self.draw_drill_note(current_note)
+            if drill_note_index != last_drawn_index:
+                self.draw_drill_note(current_note)
+                self.hw.display.refresh()
+                last_drawn_index = drill_note_index
 
             # show playing note
             target_note = self.hw.get_current_note()
@@ -145,19 +114,19 @@ class ScaleDrillState(PlayState):
                     self.total_score += score
                     self.score_label.text = str(self.total_score)
 
-                    # Spawn the animation task
-                    asyncio.create_task(self.animate_score_text())
-
                     print(f"Success! Score awarded: {score}")
 
                     # Cancel hint cycle if it's running
                     if self.hint_task is not None:
                         self.hint_task.cancel()
                         self.hint_task = None
-                    
+
                     if self.current_hint_fingering is not None:
                         await self.clear_specific_fingering(self.current_hint_fingering)
                         self.current_hint_fingering = None
+
+                    # Animate score flash, then advance — sequential keeps display updates isolated
+                    await self.animate_score_text()
 
                     # Move to next note and reset state
                     drill_note_index += 1
@@ -312,14 +281,15 @@ class ScaleDrillState(PlayState):
         original_color = self.config.color_data.fg_color
         original_scale = self.score_label.scale
 
-        for _ in range(2):
+        for _ in range(3):
             self.score_label.color = flash_color
             self.score_label.scale = flash_scale
-            await asyncio.sleep(0.1)
+            self.hw.display.refresh()
+            await asyncio.sleep(0.05)
             self.score_label.color = original_color
             self.score_label.scale = original_scale
-            await asyncio.sleep(0.1)
+            self.hw.display.refresh()
+            await asyncio.sleep(0.05)
 
     def draw_drill_note(self, note):
-        self.drill_note_sprite.y = note.staff_y_coord
-        self.decorate_note(note, self.drill_note_sprite, self.drill_sharp_sprite, self.drill_flat_sprite, self.drill_c_ledger_line, self.drill_a_ledger_line, self.drill_high_c_ledger_line, self.drill_e_ledger_line)
+        self.drill_staff.show_note(note, Duration.HALF)

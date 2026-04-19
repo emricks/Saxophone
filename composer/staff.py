@@ -379,7 +379,6 @@ class Staff(displayio.Group):
 
             current_beat += beats
 
-    def show_note(self, note: Note, rhythmic_value: str | None = None) -> None:
+    def show_note(self, note: Note, duration: str = Duration.QUARTER) -> None:
         """Renders a single note on the staff. Convenience wrapper around update_sequence."""
-        duration = rhythmic_value if rhythmic_value is not None else Duration.QUARTER
         self.update_sequence([TimedNote(note, duration)])

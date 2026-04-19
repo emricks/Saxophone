@@ -30,6 +30,14 @@ class Note:
                 mask |= (1 << button.fingering_bit)
             self.fingerings.add(mask)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Note):
+            return NotImplemented
+        return self.midi_number == other.midi_number
+
+    def __hash__(self) -> int:
+        return hash(self.midi_number)
+
 class TimedNote:
     def __init__(self, note: Note, duration: str) -> None:
         self.note = note

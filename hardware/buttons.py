@@ -1,4 +1,13 @@
-import board
+try:
+    import board
+except ModuleNotFoundError:
+    # If the platform does not fully support circuitpython's board 
+    # module (e.g. running in standard CPython on macOS for tests),
+    # fake it so imports don't crash.
+    class FakeBoard:
+        D11 = "D11"
+        # Add any other board pins used directly
+    board = FakeBoard()
 
 class ButtonHardwareSource:
     ONBOARD = "ONBOARD"

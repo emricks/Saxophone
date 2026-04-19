@@ -16,8 +16,9 @@ def test_staff_key_signature():
     # 2. Prepare display
     display = prep_display(config=config)
 
-    # 3. Create a KeySignature for "D Major" (which has F#)
-    key_sig = KeySignatures.C_SHARP_MAJOR
+    # 3. Create a KeySignature
+    #key_sig = KeySignatures.C_SHARP_MAJOR
+    key_sig = KeySignatures.C_FLAT_MAJOR
 
     # 4. Create the Staff object, passing the key signature
     staff = Staff(width=160, config=config, key_signature=key_sig)

@@ -49,3 +49,11 @@ class KeySignatures:
     D_MAJOR = KeySignature("Dmaj", [Notes.F_SHARP_4, Notes.C_SHARP_4])
     A_MAJOR = KeySignature("Amaj", [Notes.F_SHARP_4, Notes.C_SHARP_4, Notes.G_SHARP_4])
     C_SHARP_MAJOR = KeySignature("C#maj", [Notes.F_SHARP_4, Notes.C_SHARP_4, Notes.G_SHARP_4, Notes.D_SHARP_4, Notes.A_SHARP_4, Notes.E_SHARP_4, Notes.B_SHARP_4])
+
+    F_MAJOR = KeySignature("Fmaj", [Notes.B_FLAT_4])
+    B_FLAT_MAJOR = KeySignature("Bbmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4])
+    E_FLAT_MAJOR = KeySignature("Ebmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4, Notes.A_FLAT_4])
+    A_FLAT_MAJOR = KeySignature("Abmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4, Notes.A_FLAT_4, Notes.D_FLAT_4])
+    D_FLAT_MAJOR = KeySignature("Dbmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4, Notes.A_FLAT_4, Notes.D_FLAT_4, Notes.G_FLAT_4])
+    G_FLAT_MAJOR = KeySignature("Gbmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4, Notes.A_FLAT_4, Notes.D_FLAT_4, Notes.G_FLAT_4, Notes.C_FLAT_4])
+    C_FLAT_MAJOR = KeySignature("Cbmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4, Notes.A_FLAT_4, Notes.D_FLAT_4, Notes.G_FLAT_4, Notes.C_FLAT_4, Notes.F_FLAT_4])

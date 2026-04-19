@@ -5,7 +5,7 @@ DEST = /Volumes/CIRCUITPY/
 # Default target
 deploy:
 	@echo "Deploying to CircuitPython..."
-	rsync -rtv --exclude='.DS_Store' hardware data states songs $(DEST)
+	rsync -rtv --exclude='.DS_Store' --exclude='__pycache__' hardware composer data states songs $(DEST)
 	rsync -rtv code.py $(DEST)
 	@echo "Deployment complete!"
 
@@ -13,7 +13,7 @@ deploy:
 deps:
 	@echo "Installing CircuitPython stubs and hardware libraries..."
 	pip install --upgrade pip
-	pip install circuitpython-stubs adafruit-circuitpython-ili9341 adafruit-circuitpython-mcp230xx adafruit-circuitpython-imageload adafruit-circuitpython-display-text adafruit-circuitpython-bmp3xx circup
+	pip install circuitpython-stubs adafruit-circuitpython-ili9341 adafruit-circuitpython-mcp230xx blinka-displayio-pygamedisplay adafruit-circuitpython-imageload adafruit-circuitpython-display-text adafruit-circuitpython-bmp3xx circup
 	@echo "Dependencies installed! (Make sure PyCharm's virtual environment is active)"
 
 setup-device: deps

@@ -104,7 +104,7 @@ class ScaleDrillState(PlayState):
 
             # 2. VALIDATION: Have they held it long enough to earn the score?
             if self.note_played_time is not None:
-                if current_time - self.note_played_time >= 0.75:
+                if current_time - self.note_played_time >= 0.5:
                     # SUCCESS! Now we calculate and award the score
                     if self.note_start_time is None:
                         self.note_start_time = self.note_played_time

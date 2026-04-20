@@ -11,31 +11,79 @@ MAIN_MENU = {
                     "type": "menu",
                     "items": [
                         {
-                            "text": "C Major Scale",
-                            "type": "scale_drill",
-                            "payload": {
-                                "name": "C Major",
-                                "key_signature": "C_MAJOR",
-                                "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
-                            }
+                            "text": "C Major",
+                            "type": "menu",
+                            "items": [
+                                {
+                                    "text": "C Major Scale",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Major",
+                                        "key_signature": "C_MAJOR",
+                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5", "B_4", "A_4", "G_4", "F_4", "E_4", "D_4", "C_4"]
+                                    }
+                                },
+                                {
+                                    "text": "C Major Scale (Ext)",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Major",
+                                        "key_signature": "C_MAJOR",
+                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5", "D_5", "E_5", "F_5", "G_5", "A_5", "B_5", "C_6", "D_6", "E_6", "F_6"]
+                                    }
+                                },
+                                {
+                                    "text": "C Major Thirds",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Major Thirds",
+                                        "key_signature": "C_MAJOR",
+                                        "notes": ["C_4", "E_4", "D_4", "F_4", "E_4", "G_4", "F_4", "A_4", "G_4", "B_4", "A_4", "C_5", "B_4", "D_5", "C_5", "A_4", "B_4", "G_4", "A_4", "F_4", "G_4", "E_4", "F_4", "D_4", "E_4", "C_4"]
+                                    }
+                                },
+                                {
+                                    "text": "C Blues Scale",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Blues",
+                                        "key_signature": "C_MAJOR",
+                                        "notes": ["C_4", "E_FLAT_4", "F_4", "F_SHARP_4", "G_4", "B_FLAT_4", "C_5", "B_FLAT_4", "G_4", "F_SHARP_4", "F_4", "E_FLAT_4", "C_4"]
+                                    }
+                                },
+                                {"text": "< Back", "type": "back"}
+                            ]
                         },
                         {
-                            "text": "D Major Scale",
-                            "type": "scale_drill",
-                            "payload": {
-                                "name": "D Major",
-                                "key_signature": "D_MAJOR",
-                                "notes": ["D_4", "E_4", "F_SHARP_4", "G_4", "A_4", "B_4", "C_SHARP_5", "D_5"]
-                            }
+                            "text": "D Major",
+                            "type": "menu",
+                            "items": [
+                                {
+                                    "text": "D Major Scale",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "D Major",
+                                        "key_signature": "D_MAJOR",
+                                        "notes": ["D_4", "E_4", "F_SHARP_4", "G_4", "A_4", "B_4", "C_SHARP_5", "D_5", "C_SHARP_5", "B_4", "A_4", "G_4", "F_SHARP_4", "E_4", "D_4"]
+                                    }
+                                },
+                                {"text": "< Back", "type": "back"}
+                            ]
                         },
                         {
-                            "text": "E Major Scale",
-                            "type": "scale_drill",
-                            "payload": {
-                                "name": "E Major",
-                                "key_signature": "E_MAJOR",
-                                "notes": ["E_4", "F_SHARP_4", "A_FLAT_4", "A_4", "B_4", "C_SHARP_5", "E_FLAT_5", "E_5"]
-                            }
+                            "text": "E Major",
+                            "type": "menu",
+                            "items": [
+                                {
+                                    "text": "E Major Scale",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "E Major",
+                                        "key_signature": "E_MAJOR",
+                                        "notes": ["E_4", "F_SHARP_4", "A_FLAT_4", "A_4", "B_4", "C_SHARP_5", "E_FLAT_5", "E_5", "E_FLAT_5", "C_SHARP_5", "B_4", "A_4", "A_FLAT_4", "F_SHARP_4", "E_4"]
+                                    }
+                                },
+                                {"text": "< Back", "type": "back"}
+                            ]
                         },
                         {"text": "< Back", "type": "back"}
                     ]

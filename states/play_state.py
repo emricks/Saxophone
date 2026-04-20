@@ -123,7 +123,6 @@ class PlayState:
                 await self.hw.stop_note()
                 await self.hide_notes()
                 self.current_note_playing = None
-                self.hw.display.refresh()
             return
 
         if note != self.current_note_playing:
@@ -137,7 +136,6 @@ class PlayState:
                     self.staff.show_note(composer_note, Duration.HALF)
 
             self.current_note_playing = note
-            self.hw.display.refresh()
 
     async def clear_specific_fingering(self, fingering):
         if fingering:

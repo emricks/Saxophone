@@ -81,7 +81,6 @@ class ScaleDrillState(PlayState):
             current_note = self.notes[drill_note_index]
             if drill_note_index != last_drawn_index:
                 self.draw_drill_note(current_note)
-                self.hw.display.refresh()
                 last_drawn_index = drill_note_index
 
             # show playing note
@@ -140,7 +139,7 @@ class ScaleDrillState(PlayState):
                     self.hint_task = asyncio.create_task(self.cycle_fingerings(current_note))
 
             # yield control for other code to run
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.01)
 
         # Cancel any leftover hint tasks upon exiting
         if self.hint_task is not None:
@@ -284,11 +283,9 @@ class ScaleDrillState(PlayState):
         for _ in range(3):
             self.score_label.color = flash_color
             self.score_label.scale = flash_scale
-            self.hw.display.refresh()
             await asyncio.sleep(0.05)
             self.score_label.color = original_color
             self.score_label.scale = original_scale
-            self.hw.display.refresh()
             await asyncio.sleep(0.05)
 
     def draw_drill_note(self, note):

@@ -15,7 +15,7 @@ class BreathSensor:
         self.breath_sensor_triggered = False
 
         self.breath_sensor = adafruit_bmp3xx.BMP3XX_I2C(i2c)
-        self.breath_sensor.pressure_oversampling = 8
+        self.breath_sensor.pressure_oversampling = 4
         self.breath_sensor.filter_coefficient = 2
         self.initial_baseline = self.__get_breath_sensor_baseline__()
         self.baseline_offset = 0.0

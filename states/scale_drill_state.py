@@ -28,6 +28,7 @@ class ScaleDrillState(PlayState):
         self.note_start_time = None
         self.note_played_time = None
         self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
+        self.MAX_POSSIBLE_SCORE = 10000
         self.REQUIRED_HOLD_TIME = 0.75
 
         self.hint_task = None
@@ -52,6 +53,8 @@ class ScaleDrillState(PlayState):
             random_notes.append(temp_notes.pop(random.randint(0, len(temp_notes) - 1)))
         self.notes += random_notes
 
+        self.SCORE_MULTIPLY_CONSTANT = self.MAX_POSSIBLE_SCORE/(len(self.notes) * self.MAX_POSSIBLE_PER_NOTE) * 1.004
+
         # Drill note overlay staff (same position as play staff, no lines/clef, drill color)
         drill_config = Config()
         drill_config.color_data.fg_color = config.color_data.drill_note_color
@@ -61,7 +64,6 @@ class ScaleDrillState(PlayState):
         while len(self.drill_staff.static_group) > 0:
             self.drill_staff.static_group.pop()
         self.ui_group.append(self.drill_staff)
-        self.MAX_POSSIBLE_SCORE = (self.MAX_POSSIBLE_PER_NOTE - self.REQUIRED_HOLD_TIME) * 100 * len(self.notes)
 
     async def run(self):
         drill_note_index = 0
@@ -113,7 +115,9 @@ class ScaleDrillState(PlayState):
                         self.note_start_time = self.note_played_time
 
                     reaction_time = self.note_played_time - self.note_start_time
-                    score = int(max(0.0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * 100)
+                    score = int( (max(0.0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * self.SCORE_MULTIPLY_CONSTANT) )
+                    score = int( score * (1.1 if drill_note_index == 0 else 1))
+                    score = max(score, int(self.MAX_POSSIBLE_SCORE/len(self.notes)))
                     self.total_score += score
                     self.score_label.text = str(self.total_score)
 
@@ -182,15 +186,15 @@ class ScaleDrillState(PlayState):
     def get_score_message(self, score):
         # A dictionary/list mapping thresholds to messages and GIFs
         score_ranges = [
-            (0.9, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
-            (0.8, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
-            (0.65, {"message": "Great job!", "gif": "data/gif/party.gif"}),
-            (0.45, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
-            (0.2, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
+            (9000, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
+            (8000, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
+            (6500, {"message": "Great job!", "gif": "data/gif/party.gif"}),
+            (4500, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
+            (2000, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
         ]
 
         for threshold, data in score_ranges:
-            if score/self.MAX_POSSIBLE_SCORE >= threshold:
+            if score >= threshold:
                 return data
         return {"message": "Keep practicing!", "gif": "data/gif/tough.gif"}
 

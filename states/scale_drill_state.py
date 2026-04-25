@@ -28,6 +28,8 @@ class ScaleDrillState(PlayState):
         self.note_start_time = None
         self.note_played_time = None
         self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
+        self.REQUIRED_HOLD_TIME = 0.75
+
         self.hint_task = None
         self.current_hint_fingering = None
 
@@ -59,6 +61,7 @@ class ScaleDrillState(PlayState):
         while len(self.drill_staff.static_group) > 0:
             self.drill_staff.static_group.pop()
         self.ui_group.append(self.drill_staff)
+        self.MAX_POSSIBLE_SCORE = (self.MAX_POSSIBLE_PER_NOTE - self.REQUIRED_HOLD_TIME) * 100 * len(self.notes)
 
     async def run(self):
         drill_note_index = 0
@@ -104,7 +107,7 @@ class ScaleDrillState(PlayState):
 
             # 2. VALIDATION: Have they held it long enough to earn the score?
             if self.note_played_time is not None:
-                if current_time - self.note_played_time >= 0.75:
+                if current_time - self.note_played_time >= self.REQUIRED_HOLD_TIME:
                     # SUCCESS! Now we calculate and award the score
                     if self.note_start_time is None:
                         self.note_start_time = self.note_played_time
@@ -179,15 +182,15 @@ class ScaleDrillState(PlayState):
     def get_score_message(self, score):
         # A dictionary/list mapping thresholds to messages and GIFs
         score_ranges = [
-            (6000, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
-            (5000, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
-            (4000, {"message": "Great job!", "gif": "data/gif/party.gif"}),
-            (3000, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
-            (1000, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
+            (0.9, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
+            (0.8, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
+            (0.65, {"message": "Great job!", "gif": "data/gif/party.gif"}),
+            (0.45, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
+            (0.2, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
         ]
 
         for threshold, data in score_ranges:
-            if score >= threshold:
+            if score/self.MAX_POSSIBLE_SCORE >= threshold:
                 return data
         return {"message": "Keep practicing!", "gif": "data/gif/tough.gif"}
 

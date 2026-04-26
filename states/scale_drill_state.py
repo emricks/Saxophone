@@ -8,7 +8,7 @@ import terminalio
 from adafruit_display_text import label
 
 from composer.key_signature import KeySignatures
-from composer.notes import Duration, Notes as ComposerNotes
+from composer.notes import Duration, Notes as ComposerNotes, TimedNote
 from composer.staff import Staff
 from data.config import Config
 from hardware.buttons import Buttons
@@ -29,7 +29,7 @@ class ScaleDrillState(PlayState):
         self.note_played_time = None
         self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
         self.MAX_POSSIBLE_SCORE = 10000
-        self.REQUIRED_HOLD_TIME = 0.75
+        self.REQUIRED_HOLD_TIME = 0.5
 
         self.hint_task = None
         self.current_hint_fingering = None
@@ -63,7 +63,7 @@ class ScaleDrillState(PlayState):
         self.drill_staff.y = self.staff.y
         while len(self.drill_staff.static_group) > 0:
             self.drill_staff.static_group.pop()
-        self.ui_group.append(self.drill_staff)
+        self.ui_group.insert(1, self.drill_staff)
 
     async def run(self):
         drill_note_index = 0
@@ -85,7 +85,7 @@ class ScaleDrillState(PlayState):
 
             current_note = self.notes[drill_note_index]
             if drill_note_index != last_drawn_index:
-                self.draw_drill_note(current_note)
+                self.draw_drill_note(drill_note_index, 3)
                 self.hw.display.refresh()
                 last_drawn_index = drill_note_index
 
@@ -298,5 +298,6 @@ class ScaleDrillState(PlayState):
             self.hw.display.refresh()
             await asyncio.sleep(0.05)
 
-    def draw_drill_note(self, note):
-        self.drill_staff.show_note(note, Duration.HALF)
+    def draw_drill_note(self, first_note_index, number_of_notes):
+        notes_to_show = self.notes[first_note_index:min(first_note_index+number_of_notes, len(self.notes))]
+        self.drill_staff.update_sequence([TimedNote(note, Duration.QUARTER) for note in notes_to_show])

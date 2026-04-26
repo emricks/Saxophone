@@ -134,7 +134,7 @@ class PlayState:
                 self.hw.play_note(note.midi_number)
                 composer_note = note_for_key(note.midi_number, self.staff.key_signature)
                 if composer_note is not None:
-                    self.staff.show_note(composer_note, Duration.HALF)
+                    self.staff.show_note(composer_note, Duration.QUARTER)
 
             self.current_note_playing = note
             self.hw.display.refresh()

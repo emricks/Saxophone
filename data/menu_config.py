@@ -132,7 +132,101 @@ MAIN_MENU = {
         },
         {
             "text": "SONGS",
-            "type": "song"
+            "type": "menu",
+            "items": [
+                {
+                    "text": "Twinkle Twinkle",
+                    "type": "scale_drill",
+                    "payload": {
+                        "name": "Twinkle Twinkle",
+                        "key_signature": "C_MAJOR",
+                        "notes": [
+                            "C_4", "C_4", "G_4", "G_4", "A_4", "A_4", "G_4",
+                            "F_4", "F_4", "E_4", "E_4", "D_4", "D_4", "C_4",
+                            "G_4", "G_4", "F_4", "F_4", "E_4", "E_4", "D_4",
+                            "G_4", "G_4", "F_4", "F_4", "E_4", "E_4", "D_4",
+                            "C_4", "C_4", "G_4", "G_4", "A_4", "A_4", "G_4",
+                            "F_4", "F_4", "E_4", "E_4", "D_4", "D_4", "C_4"
+                        ]
+                    }
+                },
+                {
+                    "text": "Spider Dance",
+                    "type": "menu",
+                    "items": [
+                        {
+                            "text": "Intro",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "Spider Dance: Intro",
+                                "key_signature": "G_MAJOR",
+                                "notes": [
+                                    "D_5", "A_4", "F_SHARP_4", "D_4", "G_SHARP_4",
+                                    "G_4", "F_4", "C_SHARP_4", "C_5", "B_FLAT_3",
+                                    "E_4", "C_SHARP_5"
+                                ]
+                            }
+                        },
+                        {
+                            "text": "Theme A",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "Spider Dance: Theme A",
+                                "key_signature": "G_MAJOR",
+                                "notes": [
+                                    "A_5", "G_5", "D_6", "C_SHARP_6", "B_FLAT_5",
+                                    "F_SHARP_5", "D_5", "A_4", "E_5"
+                                ]
+                            }
+                        },
+                        {
+                            "text": "Climax",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "Spider Dance: Climax",
+                                "key_signature": "G_MAJOR",
+                                "notes": [
+                                    "A_5", "D_6", "G_5", "F_SHARP_5",
+                                    "A_FLAT_5", "C_SHARP_5", "A_4", "B_4", "D_5"
+                                ]
+                            }
+                        },
+                        {
+                            "text": "Bridge",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "Spider Dance: Bridge",
+                                "key_signature": "G_MAJOR",
+                                "notes": [
+                                    "A_5", "F_SHARP_5", "D_5", "G_4", "A_4",
+                                    "B_FLAT_4", "F_SHARP_4", "E_5", "C_SHARP_5",
+                                    "G_5", "F_5", "C_6", "B_FLAT_5"
+                                ]
+                            }
+                        },
+                        {
+                            "text": "Pattern I",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "Spider Dance: Pattern I",
+                                "key_signature": "G_MAJOR",
+                                "notes": ["G_5", "F_SHARP_5", "D_5", "C_SHARP_5"]
+                            }
+                        },
+                        {
+                            "text": "Pattern II",
+                            "type": "scale_drill",
+                            "payload": {
+                                "name": "Spider Dance: Pattern II",
+                                "key_signature": "G_MAJOR",
+                                "notes": ["G_5", "F_SHARP_5", "F_5", "G_SHARP_5", "D_5"]
+                            }
+                        },
+                        {"text": "< Back", "type": "back"}
+                    ]
+                },
+                {"text": "< Back", "type": "back"}
+            ]
         },
         {
             "text": "FREE PLAY",

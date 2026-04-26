@@ -211,6 +211,10 @@ class Notes:
     A_FLAT_5 = Note(name="A_FLAT_5", midi_number=71, fingerings={
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.L_G_SHARP)
     }, ledger_line=5.0, accidental=Accidental.FLAT)
+    # G#5 is enharmonic to Ab5.
+    G_SHARP_5 = Note(name="G_SHARP_5", midi_number=71, fingerings={
+        (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.L_G_SHARP)
+    }, ledger_line=4.5, accidental=Accidental.SHARP)
     A_5 = Note(name="A_5", midi_number=72, fingerings={
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2)
     }, ledger_line=5.0)

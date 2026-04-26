@@ -6,7 +6,7 @@ import adafruit_bmp3xx
 
 class BreathSensor:
     # breath sensor constants
-    THRESHOLD = 0.3# hPa change required to trigger breath sensor
+    THRESHOLD = 0.25# hPa change required to trigger breath sensor
     NOISE_FLOOR = THRESHOLD/2  # Changes smaller than this are treated as drift (baseline updates)
     LEARNING_RATE = 0.005  # How quickly the baseline follows drift (e.g. 0.01 = 1%)
     CHECK_INTERVAL = .08 # how often to check if sensor is activated
@@ -15,7 +15,7 @@ class BreathSensor:
         self.breath_sensor_triggered = False
 
         self.breath_sensor = adafruit_bmp3xx.BMP3XX_I2C(i2c)
-        self.breath_sensor.pressure_oversampling = 8
+        self.breath_sensor.pressure_oversampling = 4
         self.breath_sensor.filter_coefficient = 2
         self.initial_baseline = self.__get_breath_sensor_baseline__()
         self.baseline_offset = 0.0

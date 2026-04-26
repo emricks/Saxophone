@@ -53,7 +53,7 @@ class Notes:
     B_3 = Note(name="B_3", midi_number=50, fingerings={
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B)
     }, ledger_line=-1.5)
-    B_SHARP_3 = Note(name="C_4", midi_number=51, fingerings={
+    B_SHARP_3 = Note(name="B_SHARP_3", midi_number=51, fingerings={
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C)
     }, ledger_line=-1.5, accidental=Accidental.SHARP)
     # B# is enharmonic to C
@@ -150,7 +150,7 @@ class Notes:
          Buttons.R_LOW_C)
     }, ledger_line=2.0, accidental=Accidental.SHARP)
 
-    C_FLAT_5 = Note(name="B_4", midi_number=62, fingerings={
+    C_FLAT_5 = Note(name="C_FLAT_5", midi_number=62, fingerings={
         (Buttons.L_1,),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3,
          Buttons.R_LOW_C, Buttons.L_LOW_B),
@@ -280,6 +280,7 @@ class Notes:
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F, Buttons.R_HIGH_F_SHARP)
     }, ledger_line=7.5, accidental=Accidental.SHARP)
 
+    # ALL includes every enharmonic variant — used for MIDI-number-based lookups.
     ALL = (B_FLAT_3, B_3, B_SHARP_3,
            C_FLAT_4, C_4, C_SHARP_4, D_FLAT_4, D_4, D_SHARP_4, E_FLAT_4, E_4, E_SHARP_4,
            F_FLAT_4, F_4, F_SHARP_4, G_FLAT_4, G_4, G_SHARP_4,
@@ -289,19 +290,51 @@ class Notes:
            A_FLAT_5, A_5, A_SHARP_5, B_FLAT_5, B_5, B_SHARP_5,
            C_FLAT_6, C_6, C_SHARP_6, D_FLAT_6, D_6, D_SHARP_6, E_FLAT_6, E_6, E_SHARP_6,
            F_FLAT_6, F_6, F_SHARP_6)
-    # Build a reverse lookup dictionary for instant access: bitmask -> Note
-    MASK_TO_NOTE = {}
 
-    for note in ALL:
+    # CANONICAL is the preferred spelling for each fingering (natural/flat-biased).
+    # MASK_TO_NOTE is built from this so hardware detection is always unambiguous.
+    CANONICAL = (B_FLAT_3, B_3,
+                 C_4, C_SHARP_4, D_4, E_FLAT_4, E_4, F_4, F_SHARP_4, G_4, A_FLAT_4, A_4, B_FLAT_4, B_4,
+                 C_5, C_SHARP_5, D_5, E_FLAT_5, E_5, F_5, F_SHARP_5, G_5, A_FLAT_5, A_5, B_FLAT_5, B_5,
+                 C_6, C_SHARP_6, D_6, E_FLAT_6, E_6, F_6, F_SHARP_6)
+
+    # bitmask -> canonical Note (for hardware fingering detection)
+    MASK_TO_NOTE = {}
+    for note in CANONICAL:
         for mask in note.fingerings:
             MASK_TO_NOTE[mask] = note
+
+    # midi_number -> [Note, ...] including all enharmonic spellings
+    MIDI_TO_NOTES = {}
+    for _n in ALL:
+        if _n.midi_number not in MIDI_TO_NOTES:
+            MIDI_TO_NOTES[_n.midi_number] = []
+        MIDI_TO_NOTES[_n.midi_number].append(_n)
 
     @staticmethod
     def get_note_by_name(name) -> Note | None:
         """Returns the Note instance corresponding to the given name string."""
         return getattr(Notes, name, None)
 
-
 def note_from_mask(mask):
-    note = Notes.MASK_TO_NOTE.get(mask, None)
-    return note
+    return Notes.MASK_TO_NOTE.get(mask, None)
+
+
+def note_for_key(midi_number, key_signature=None):
+    candidates = Notes.MIDI_TO_NOTES.get(midi_number, [])
+    if not candidates:
+        return None
+
+    if key_signature:
+        pitch_class = midi_number % 12
+        for ks_note in key_signature.accidentals:
+            if ks_note.midi_number % 12 == pitch_class:
+                letter = ks_note.name.split("_")[0]
+                acc = ks_note.accidental
+                for n in candidates:
+                    if n.name.split("_")[0] == letter and n.accidental == acc:
+                        return n
+
+    for mask in candidates[0].fingerings:
+        return Notes.MASK_TO_NOTE.get(mask, candidates[0])
+    return candidates[0]

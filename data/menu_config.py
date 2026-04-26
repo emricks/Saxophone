@@ -167,6 +167,16 @@ MAIN_MENU = {
                                         "mode": "none"
                                     }
                                 },
+                                {
+                                    "text": "F Major Thirds",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "F Major Thirds",
+                                        "key_signature": "F_MAJOR",
+                                        "notes": ["F_4", "A_4", "G_4", "B_FLAT_4", "A_4", "C_5", "B_FLAT_4", "D_5", "C_5", "E_5", "D_5", "F_5", "E_5", "G_5", "F_5", "E_5", "D_5", "F_5", "C_5", "E_5", "B_FLAT_4", "D_5", "A_4", "C_5", "G_4", "B_FLAT_4", "F_4", "A_4", "G_4", "F_4"],
+                                        "mode": "none"
+                                    }
+                                },
                                 {"text": "< Back", "type": "back"}
                             ]
                         },

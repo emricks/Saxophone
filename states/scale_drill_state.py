@@ -117,7 +117,7 @@ class ScaleDrillState(PlayState):
                     reaction_time = self.note_played_time - self.note_start_time
                     score = int( (max(0.0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * self.SCORE_MULTIPLY_CONSTANT) )
                     score = int( score * (1.1 if drill_note_index == 0 else 1))
-                    score = max(score, int(self.MAX_POSSIBLE_SCORE/len(self.notes)))
+                    score = min(score, int(self.MAX_POSSIBLE_SCORE/len(self.notes)))
                     self.total_score += score
                     self.score_label.text = str(self.total_score)
 
@@ -186,11 +186,11 @@ class ScaleDrillState(PlayState):
     def get_score_message(self, score):
         # A dictionary/list mapping thresholds to messages and GIFs
         score_ranges = [
-            (9000, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
-            (8000, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
-            (6500, {"message": "Great job!", "gif": "data/gif/party.gif"}),
-            (4500, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
-            (2000, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
+            (8500, {"message": "Perfecto!", "gif": "data/gif/lasercat.gif"}),
+            (7500, {"message": "You're a pro!", "gif": "data/gif/groovin.gif"}),
+            (6000, {"message": "Great job!", "gif": "data/gif/party.gif"}),
+            (4000, {"message": "Good effort!", "gif": "data/gif/meh.gif"}),
+            (1500, {"message": "No pain, no gain!", "gif": "data/gif/tough.gif"})
         ]
 
         for threshold, data in score_ranges:

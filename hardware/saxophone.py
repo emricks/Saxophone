@@ -56,7 +56,8 @@ class SaxHardware:
             sample_rate=22050,
             channel_count=1,
             bits_per_sample=16,
-            samples_signed=True
+            samples_signed=True,
+            buffer_size=6144
         )
         self.audio.play(self.mixer)
 
@@ -66,7 +67,7 @@ class SaxHardware:
         self.mixer.voice[0].play(self.synth)
 
         # 5. Set Master Volume
-        self.mixer.voice[0].level = 0.3
+        self.mixer.voice[0].level = 1
 
         # 6. The Breath (Envelope)
         self.sax_envelope = synthio.Envelope(
@@ -74,7 +75,7 @@ class SaxHardware:
             decay_time=0.0,
             release_time=SaxHardware.NOTE_RELEASE_TIME,
             attack_level=1.0,
-            sustain_level=1.0
+            sustain_level=0.8
         )
 
         # 7. The Tone (Waveform)

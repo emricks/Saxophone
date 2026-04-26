@@ -316,34 +316,25 @@ class Notes:
         """Returns the Note instance corresponding to the given name string."""
         return getattr(Notes, name, None)
 
-    @staticmethod
-    def get_note_for_key(midi_number, key_signature=None) -> Note | None:
-        """
-        Returns the Note with the enharmonic spelling appropriate for the key signature.
-        If no key-signature preference applies, returns the canonical (natural/flat-biased) spelling.
-        """
-        candidates = Notes.MIDI_TO_NOTES.get(midi_number, [])
-        if not candidates:
-            return None
-
-        if key_signature:
-            pitch_class = midi_number % 12
-            for ks_note in key_signature.accidentals:
-                if ks_note.midi_number % 12 == pitch_class:
-                    letter = ks_note.name.split("_")[0]
-                    acc = ks_note.accidental
-                    match = next(
-                        (n for n in candidates if n.name.split("_")[0] == letter and n.accidental == acc),
-                        None
-                    )
-                    if match:
-                        return match
-
-        return Notes.MASK_TO_NOTE.get(
-            next(iter(candidates[0].fingerings), None), candidates[0]
-        )
-
-
 def note_from_mask(mask):
-    note = Notes.MASK_TO_NOTE.get(mask, None)
-    return note
+    return Notes.MASK_TO_NOTE.get(mask, None)
+
+
+def note_for_key(midi_number, key_signature=None):
+    candidates = Notes.MIDI_TO_NOTES.get(midi_number, [])
+    if not candidates:
+        return None
+
+    if key_signature:
+        pitch_class = midi_number % 12
+        for ks_note in key_signature.accidentals:
+            if ks_note.midi_number % 12 == pitch_class:
+                letter = ks_note.name.split("_")[0]
+                acc = ks_note.accidental
+                for n in candidates:
+                    if n.name.split("_")[0] == letter and n.accidental == acc:
+                        return n
+
+    for mask in candidates[0].fingerings:
+        return Notes.MASK_TO_NOTE.get(mask, candidates[0])
+    return candidates[0]

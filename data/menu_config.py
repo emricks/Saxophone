@@ -20,7 +20,7 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "C Major",
                                         "key_signature": "C_MAJOR",
-                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"]
+                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5", "B_4", "A_4", "G_4", "F_4", "E_4", "D_4", "C_4"]
                                     }
                                 },
                                 {
@@ -125,6 +125,39 @@ MAIN_MENU = {
                                 {"text": "< Back", "type": "back"}
                             ]
                         },
+                        {
+                            "text": "Blues Scales",
+                            "type": "menu",
+                            "items": [
+                                {
+                                    "text": "C Blues Scale",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Blues",
+                                        "key_signature": "C_MAJOR",
+                                        "notes": ["C_4", "E_FLAT_4", "F_4", "F_SHARP_4", "G_4", "B_FLAT_4", "C_5", "B_FLAT_4", "G_4", "F_SHARP_4", "F_4", "E_FLAT_4", "C_4"]
+                                    }
+                                },
+                                {"text": "< Back", "type": "back"}
+                            ]
+                        },
+                        {
+                            "text": "Thirds Scales",
+                            "type": "menu",
+                            "items": [
+                                {
+                                    "text": "C Major Thirds",
+                                    "type": "scale_drill",
+                                    "payload": {
+                                        "name": "C Major Thirds",
+                                        "key_signature": "C_MAJOR",
+                                        "notes": ["C_4", "E_4", "D_4", "F_4", "E_4", "G_4", "F_4", "A_4", "G_4", "B_4", "A_4", "C_5", "B_4", "D_5", "C_5", "B_4", "A_4", "C_5", "G_4", "B_4", "F_4", "A_4", "E_4", "G_4", "D_4", "F_4", "C_4", "E_4", "D_4", "C_4"]
+                                    }
+                                },
+                                {"text": "< Back", "type": "back"}
+                            ]
+                        },
+                        {"text": "< Back", "type": "back"}
                     ]
                 },
                 {"text": "< Back", "type": "back"}

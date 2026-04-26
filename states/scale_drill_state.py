@@ -19,6 +19,7 @@ class ScaleDrillState(PlayState):
     def __init__(self, hardware, payload, config):
         self.drill_name = payload.get("name", "Unknown Drill")
         key_sig_name = payload.get("key_signature", "C_MAJOR")
+        self.mode = payload.get("mode", "rand")
         key_signature = getattr(KeySignatures, key_sig_name, KeySignatures.C_MAJOR)
         super().__init__(hardware, config, title=self.drill_name, key_signature=key_signature)
 
@@ -47,11 +48,15 @@ class ScaleDrillState(PlayState):
 
         note_names = payload.get("notes", [])
         self.notes = [ComposerNotes.get_note_by_name(name) for name in note_names if ComposerNotes.get_note_by_name(name) is not None]
-        temp_notes = [note for note in self.notes]
-        random_notes = []
-        for i in range(len(self.notes)):
-            random_notes.append(temp_notes.pop(random.randint(0, len(temp_notes) - 1)))
-        self.notes += random_notes
+
+        notes_to_add = []
+        if self.mode == "rand":
+            notes_to_add = random.sample(self.notes, len(self.notes))
+        elif self.mode == "reverse":
+            notes_to_add = list(reversed(self.notes))
+            notes_to_add.pop(0)
+
+        self.notes += notes_to_add
 
         self.SCORE_MULTIPLY_CONSTANT = self.MAX_POSSIBLE_SCORE/(len(self.notes) * self.MAX_POSSIBLE_PER_NOTE) * 1.004
 

@@ -20,7 +20,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "C Major",
                                         "key_signature": "C_MAJOR",
-                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5", "B_4", "A_4", "G_4", "F_4", "E_4", "D_4", "C_4"]
+                                        "notes": ["C_4", "D_4", "E_4", "F_4", "G_4", "A_4", "B_4", "C_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -29,7 +30,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "F Major",
                                         "key_signature": "F_MAJOR",
-                                        "notes": ["F_4", "G_4", "A_4", "B_FLAT_4", "C_5", "D_5", "E_5", "F_5"]
+                                        "notes": ["F_4", "G_4", "A_4", "B_FLAT_4", "C_5", "D_5", "E_5", "F_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -38,7 +40,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "Bb Major",
                                         "key_signature": "B_FLAT_MAJOR",
-                                        "notes": ["B_FLAT_4", "C_5", "D_5", "E_FLAT_5", "F_5", "G_5", "A_5", "B_FLAT_5"]
+                                        "notes": ["B_FLAT_4", "C_5", "D_5", "E_FLAT_5", "F_5", "G_5", "A_5", "B_FLAT_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -47,7 +50,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "Eb Major",
                                         "key_signature": "E_FLAT_MAJOR",
-                                        "notes": ["E_FLAT_4", "F_4", "G_4", "A_FLAT_4", "B_FLAT_4", "C_5", "D_5", "E_FLAT_5"]
+                                        "notes": ["E_FLAT_4", "F_4", "G_4", "A_FLAT_4", "B_FLAT_4", "C_5", "D_5", "E_FLAT_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -56,7 +60,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "Ab Major",
                                         "key_signature": "A_FLAT_MAJOR",
-                                        "notes": ["A_FLAT_4", "B_FLAT_4", "C_5", "D_FLAT_5", "E_FLAT_5", "F_5", "G_5", "A_FLAT_5"]
+                                        "notes": ["A_FLAT_4", "B_FLAT_4", "C_5", "D_FLAT_5", "E_FLAT_5", "F_5", "G_5", "A_FLAT_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -65,7 +70,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "Db Major",
                                         "key_signature": "D_FLAT_MAJOR",
-                                        "notes": ["D_FLAT_4", "E_FLAT_4", "F_4", "G_FLAT_4", "A_FLAT_4", "B_FLAT_4", "C_5", "D_FLAT_5"]
+                                        "notes": ["D_FLAT_4", "E_FLAT_4", "F_4", "G_FLAT_4", "A_FLAT_4", "B_FLAT_4", "C_5", "D_FLAT_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -74,7 +80,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "Gb Major",
                                         "key_signature": "G_FLAT_MAJOR",
-                                        "notes": ["G_FLAT_4", "A_FLAT_4", "B_FLAT_4", "C_FLAT_5", "D_FLAT_5", "E_FLAT_5", "F_5", "G_FLAT_5"]
+                                        "notes": ["G_FLAT_4", "A_FLAT_4", "B_FLAT_4", "C_FLAT_5", "D_FLAT_5", "E_FLAT_5", "F_5", "G_FLAT_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -83,7 +90,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "B Major",
                                         "key_signature": "B_MAJOR",
-                                        "notes": ["B_4", "C_SHARP_5", "D_SHARP_5", "E_5", "F_SHARP_5", "G_SHARP_5", "A_SHARP_5", "B_5"]
+                                        "notes": ["B_4", "C_SHARP_5", "D_SHARP_5", "E_5", "F_SHARP_5", "G_SHARP_5", "A_SHARP_5", "B_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -92,7 +100,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "E Major",
                                         "key_signature": "E_MAJOR",
-                                        "notes": ["E_4", "F_SHARP_4", "G_SHARP_4", "A_4", "B_4", "C_SHARP_5", "D_SHARP_5", "E_5"]
+                                        "notes": ["E_4", "F_SHARP_4", "G_SHARP_4", "A_4", "B_4", "C_SHARP_5", "D_SHARP_5", "E_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -101,7 +110,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "A Major",
                                         "key_signature": "A_MAJOR",
-                                        "notes": ["A_4", "B_4", "C_SHARP_5", "D_5", "E_5", "F_SHARP_5", "G_SHARP_5", "A_5"]
+                                        "notes": ["A_4", "B_4", "C_SHARP_5", "D_5", "E_5", "F_SHARP_5", "G_SHARP_5", "A_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -110,7 +120,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "D Major",
                                         "key_signature": "D_MAJOR",
-                                        "notes": ["D_4", "E_4", "F_SHARP_4", "G_4", "A_4", "B_4", "C_SHARP_5", "D_5"]
+                                        "notes": ["D_4", "E_4", "F_SHARP_4", "G_4", "A_4", "B_4", "C_SHARP_5", "D_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {
@@ -119,7 +130,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "G Major",
                                         "key_signature": "G_MAJOR",
-                                        "notes": ["G_4", "A_4", "B_4", "C_5", "D_5", "E_5", "F_SHARP_5", "G_5"]
+                                        "notes": ["G_4", "A_4", "B_4", "C_5", "D_5", "E_5", "F_SHARP_5", "G_5"],
+                                        "mode": "reverse"
                                     }
                                 },
                                 {"text": "< Back", "type": "back"}
@@ -151,7 +163,8 @@ MAIN_MENU = {
                                     "payload": {
                                         "name": "C Major Thirds",
                                         "key_signature": "C_MAJOR",
-                                        "notes": ["C_4", "E_4", "D_4", "F_4", "E_4", "G_4", "F_4", "A_4", "G_4", "B_4", "A_4", "C_5", "B_4", "D_5", "C_5", "B_4", "A_4", "C_5", "G_4", "B_4", "F_4", "A_4", "E_4", "G_4", "D_4", "F_4", "C_4", "E_4", "D_4", "C_4"]
+                                        "notes": ["C_4", "E_4", "D_4", "F_4", "E_4", "G_4", "F_4", "A_4", "G_4", "B_4", "A_4", "C_5", "B_4", "D_5", "C_5", "B_4", "A_4", "C_5", "G_4", "B_4", "F_4", "A_4", "E_4", "G_4", "D_4", "F_4", "C_4", "E_4", "D_4", "C_4"],
+                                        "mode": "none"
                                     }
                                 },
                                 {"text": "< Back", "type": "back"}
@@ -180,7 +193,8 @@ MAIN_MENU = {
                             "G_4", "G_4", "F_4", "F_4", "E_4", "E_4", "D_4",
                             "C_4", "C_4", "G_4", "G_4", "A_4", "A_4", "G_4",
                             "F_4", "F_4", "E_4", "E_4", "D_4", "D_4", "C_4"
-                        ]
+                        ],
+                        "mode": "none"
                     }
                 },
                 {
@@ -197,7 +211,8 @@ MAIN_MENU = {
                                     "D_5", "A_4", "F_SHARP_4", "D_4", "G_SHARP_4",
                                     "G_4", "F_4", "C_SHARP_4", "C_5", "B_FLAT_3",
                                     "E_4", "C_SHARP_5"
-                                ]
+                                ],
+                                "mode": "none"
                             }
                         },
                         {
@@ -209,7 +224,8 @@ MAIN_MENU = {
                                 "notes": [
                                     "A_5", "G_5", "D_6", "C_SHARP_6", "B_FLAT_5",
                                     "F_SHARP_5", "D_5", "A_4", "E_5"
-                                ]
+                                ],
+                                "mode": "none"
                             }
                         },
                         {
@@ -221,7 +237,8 @@ MAIN_MENU = {
                                 "notes": [
                                     "A_5", "D_6", "G_5", "F_SHARP_5",
                                     "A_FLAT_5", "C_SHARP_5", "A_4", "B_4", "D_5"
-                                ]
+                                ],
+                                "mode": "none"
                             }
                         },
                         {
@@ -234,7 +251,8 @@ MAIN_MENU = {
                                     "A_5", "F_SHARP_5", "D_5", "G_4", "A_4",
                                     "B_FLAT_4", "F_SHARP_4", "E_5", "C_SHARP_5",
                                     "G_5", "F_5", "C_6", "B_FLAT_5"
-                                ]
+                                ],
+                                "mode": "none"
                             }
                         },
                         {
@@ -243,7 +261,8 @@ MAIN_MENU = {
                             "payload": {
                                 "name": "Spider Dance: Pattern I",
                                 "key_signature": "G_MAJOR",
-                                "notes": ["G_5", "F_SHARP_5", "D_5", "C_SHARP_5"]
+                                "notes": ["G_5", "F_SHARP_5", "D_5", "C_SHARP_5"],
+                                "mode": "none"
                             }
                         },
                         {
@@ -252,7 +271,8 @@ MAIN_MENU = {
                             "payload": {
                                 "name": "Spider Dance: Pattern II",
                                 "key_signature": "G_MAJOR",
-                                "notes": ["G_5", "F_SHARP_5", "F_5", "G_SHARP_5", "D_5"]
+                                "notes": ["G_5", "F_SHARP_5", "F_5", "G_SHARP_5", "D_5"],
+                                "mode": "none"
                             }
                         },
                         {"text": "< Back", "type": "back"}

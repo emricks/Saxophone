@@ -132,7 +132,7 @@ class PlayState:
 
             if note is not None:
                 self.hw.play_note(note.midi_number)
-                composer_note = ComposerNotes.get_note_by_name(note.name)
+                composer_note = ComposerNotes.get_note_for_key(note.midi_number, self.staff.key_signature)
                 if composer_note is not None:
                     self.staff.show_note(composer_note, Duration.HALF)
 

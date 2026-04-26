@@ -208,6 +208,21 @@ MAIN_MENU = {
                     }
                 },
                 {
+                    "text": "Happy Birthday",
+                    "type": "scale_drill",
+                    "payload": {
+                        "name": "Happy Birthday",
+                        "key_signature": "F_MAJOR",
+                        "notes": [
+                            "C_4", "C_4", "D_4", "C_4", "F_4", "E_4",
+                            "C_4", "C_4", "D_4", "C_4", "G_4", "F_4",
+                            "C_4", "C_4", "C_5", "A_4", "F_4", "E_4", "D_4",
+                            "B_FLAT_4", "B_FLAT_4", "A_4", "F_4", "G_4", "F_4"
+                        ],
+                        "mode": "none"
+                    }
+                },
+                {
                     "text": "Spider Dance",
                     "type": "menu",
                     "items": [

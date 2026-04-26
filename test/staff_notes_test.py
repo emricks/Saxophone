@@ -102,7 +102,7 @@ def test_ledger_lines():
     staff.update_sequence([
         TimedNote(Notes.C_4, Duration.QUARTER),   # 1 ledger line below
         TimedNote(Notes.B_3, Duration.QUARTER),   # sits below that ledger line
-        TimedNote(Notes.A_5, Duration.QUARTER),   # 1 ledger line abovecan we
+        TimedNote(Notes.A_5, Duration.QUARTER),   # 1 ledger line above
         TimedNote(Notes.C_6, Duration.QUARTER),   # 2 ledger lines above
     ])
     show_and_wait(display)

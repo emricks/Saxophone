@@ -1,5 +1,5 @@
 # Variables
-DEST = /Volumes/CIRCUITPY/
+DEST = /Volumes/CIRCUITPY
 
 
 # Default target
@@ -19,3 +19,6 @@ deps:
 setup-device: deps
 	@echo "Installing libraries to device"
 	circup install asyncio adafruit_display_text adafruit_ili9341 adafruit_mcp230xx adafruit_imageload adafruit_bmp3xx
+
+calibrate:
+	touch $(DEST)/CALIBRATE

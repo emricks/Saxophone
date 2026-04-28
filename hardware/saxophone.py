@@ -93,15 +93,13 @@ class SaxHardware:
         self.mcp1_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP1]
         self.mcp2_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP2]
 
-        # Initialize the pins for buttons managed by MCP GPIO
-        for btn in self.mcp1_buttons:
-            pin = self.mcp1.get_pin(btn.hw_pin)
-            pin.direction = digitalio.Direction.INPUT
-            pin.pull = digitalio.Pull.UP
-        for btn in self.mcp2_buttons:
-            pin = self.mcp2.get_pin(btn.hw_pin)
-            pin.direction = digitalio.Direction.INPUT
-            pin.pull = digitalio.Pull.UP
+        # Configure all 16 pins on each MCP as input + pullup so calibration can
+        # remap to any pin without re-init, and unmapped pins still read clean.
+        for mcp in (self.mcp1, self.mcp2):
+            for pin_num in range(16):
+                pin = mcp.get_pin(pin_num)
+                pin.direction = digitalio.Direction.INPUT
+                pin.pull = digitalio.Pull.UP
         print("Initialized MCPs")
 
         # initialize the pins for buttons managed by onboard GPIO

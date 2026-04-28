@@ -7,11 +7,10 @@ from data.config import Config
 
 
 async def main():
-    # Initialize hardware abstraction
+    config = Config.load_config()
+
     hw = SaxHardware()
     await hw.start_hardware()
-
-    config = Config.load_config()
 
     initial_state = MenuState(hw, MAIN_MENU, config)
 

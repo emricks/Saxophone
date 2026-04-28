@@ -36,7 +36,7 @@ class SaxHardware:
         self.backlight.value = True
 
         self.display_bus = fourwire.FourWire(
-            self.spi, command=self.tft_dc, chip_select=self.tft_cs, reset=self.tft_rst, baudrate=62500000
+            self.spi, command=self.tft_dc, chip_select=self.tft_cs, reset=self.tft_rst, baudrate=32000000
         )
         self.display = adafruit_ili9341.ILI9341(self.display_bus, width=320, height=240)
         print("Display initialized!")

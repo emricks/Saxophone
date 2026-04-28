@@ -23,6 +23,29 @@ def _apply_dict(obj, data):
             setattr(obj, key, val)
 
 
+def _pretty_dump(obj, f, level: int = 0) -> None:
+    if isinstance(obj, dict):
+        if not obj:
+            f.write("{}")
+            return
+        indent = "  " * level
+        inner = "  " * (level + 1)
+        f.write("{\n")
+        items = list(obj.items())
+        for i, (key, val) in enumerate(items):
+            f.write(inner)
+            f.write(json.dumps(key))
+            f.write(": ")
+            _pretty_dump(val, f, level + 1)
+            if i < len(items) - 1:
+                f.write(",")
+            f.write("\n")
+        f.write(indent)
+        f.write("}")
+    else:
+        f.write(json.dumps(obj))
+
+
 class Config:
     def __init__(self):
         self.color_data = ColorConfig()
@@ -31,13 +54,14 @@ class Config:
 
     @classmethod
     def load_config(cls) -> "Config":
+        config = cls()
         try:
             with open(CONFIG_PATH, "r") as f:
                 data = json.load(f)
-            config = cls()
             _apply_dict(config, data)
-        except (OSError, ValueError):
-            config = cls()
+            print("Loaded config from", CONFIG_PATH, ":", data)
+        except (OSError, ValueError) as e:
+            print(f"Could not load {CONFIG_PATH} ({e}); writing defaults")
             config.persist()
         Buttons.apply_config(config.button_data)
         return config
@@ -45,10 +69,10 @@ class Config:
     def persist(self) -> None:
         try:
             with open(CONFIG_PATH, "w") as f:
-                json.dump(_to_dict(self), f)
+                _pretty_dump(_to_dict(self), f)
         except OSError as e:
-            # Filesystem is read-only for the device while USB host has it mounted.
-            # Run unplugged once to let the device write the bootstrap config.
+            # Filesystem is host-writable (dev mode from boot.py).
+            # Hold 3+ buttons on MCP1 at boot to enter run mode for device writes.
             print(f"Warning: could not persist config ({e}); using in-memory values.")
 
 

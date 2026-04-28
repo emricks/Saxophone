@@ -1,17 +1,17 @@
 import asyncio
 import gc
 
-from data.config import ColorConfig, Config
+from data.config import ColorConfig
 from hardware.buttons import Buttons
 from states.state_utils import SelectableList
 
 
 class MenuState:
-    def __init__(self, hardware, menu_data):
+    def __init__(self, hardware, menu_data, config):
         self.hw = hardware
         self.current_menu = menu_data
         self.menu_stack = []
-        self.config = Config()
+        self.config = config
 
         # The selectable list handles drawing items and selection logic
         header_text = self.current_menu.get("title", self.current_menu.get("text", "MENU"))
@@ -62,6 +62,7 @@ class MenuState:
                         fingering_color=payload.get("fingering_color"),
                         drill_note_color=payload.get("drill_note_color")
                     )
+                    self.config.persist()
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})
                     from states.scale_drill_state import ScaleDrillState

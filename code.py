@@ -12,7 +12,7 @@ from data.config import Config
 async def main():
     config = Config.load_config()
 
-    hw = SaxHardware()
+    hw = SaxHardware(config)
     await hw.start_hardware()
 
     if calibrate_requested():

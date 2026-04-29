@@ -13,6 +13,7 @@ import synthio
 import audiomixer
 from adafruit_mcp230xx.mcp23017 import MCP23017
 
+from data.config import Config
 from hardware.breath import BreathSensor
 from hardware.buttons import ButtonHardwareSource, Buttons
 from composer.notes import note_from_mask
@@ -21,7 +22,7 @@ from composer.notes import note_from_mask
 class SaxHardware:
     NOTE_RELEASE_TIME = 0.05
 
-    def __init__(self):
+    def __init__(self, config: Config):
         displayio.release_displays()
 
         # --- Display Setup  ---
@@ -67,7 +68,7 @@ class SaxHardware:
         self.mixer.voice[0].play(self.synth)
 
         # 5. Set Master Volume
-        self.mixer.voice[0].level = 1
+        self.mixer.voice[0].level = config.volume_data.volume
 
         # 6. The Breath (Envelope)
         self.sax_envelope = synthio.Envelope(

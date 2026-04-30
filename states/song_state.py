@@ -27,6 +27,8 @@ class SongState(PlayState):
         # Initially, show the selectable list UI instead of PlayState UI
         self.hw.display.root_group = self.selectable_list.ui_group
 
+        self.hw.mixer.voice[1].level = config.volume_data.volume
+
     @staticmethod
     def _get_song_list():
         try:
@@ -83,7 +85,6 @@ class SongState(PlayState):
             # to guarantee the file handle is cleaned up when we exit this song.
             with open(selected_song['file'], "rb") as mp3_file:
                 decoder = audiomp3.MP3Decoder(mp3_file, SongState.AUDIO_BUFFER)
-                self.hw.mixer.voice[1].level = 0.3
                 self.hw.mixer.voice[1].play(decoder)
                 
                 # Reset PlayState's running flag in case we played a song previously

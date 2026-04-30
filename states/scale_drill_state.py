@@ -51,7 +51,9 @@ class ScaleDrillState(PlayState):
 
         notes_to_add = []
         if self.mode == "rand":
-            notes_to_add = random.sample(self.notes, len(self.notes))
+            # CircuitPython has no random.sample/choices — use random.choice per slot.
+            # Picks with replacement, so the same note can repeat freely.
+            notes_to_add = [random.choice(self.notes) for _ in range(len(self.notes))]
         elif self.mode == "reverse":
             notes_to_add = list(reversed(self.notes))
             notes_to_add.pop(0)

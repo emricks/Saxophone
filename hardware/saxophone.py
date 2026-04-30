@@ -13,6 +13,7 @@ import synthio
 import audiomixer
 from adafruit_mcp230xx.mcp23017 import MCP23017
 
+from data.config import Config
 from hardware.breath import BreathSensor
 from hardware.buttons import ButtonHardwareSource, Buttons
 from composer.notes import note_from_mask
@@ -21,7 +22,7 @@ from composer.notes import note_from_mask
 class SaxHardware:
     NOTE_RELEASE_TIME = 0.05
 
-    def __init__(self):
+    def __init__(self, config: Config):
         displayio.release_displays()
 
         # --- Display Setup  ---
@@ -67,7 +68,7 @@ class SaxHardware:
         self.mixer.voice[0].play(self.synth)
 
         # 5. Set Master Volume
-        self.mixer.voice[0].level = 1
+        self.mixer.voice[0].level = config.volume_data.volume
 
         # 6. The Breath (Envelope)
         self.sax_envelope = synthio.Envelope(
@@ -93,15 +94,13 @@ class SaxHardware:
         self.mcp1_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP1]
         self.mcp2_buttons = [btn for btn in Buttons.ALL if btn.hw_source == ButtonHardwareSource.MCP2]
 
-        # Initialize the pins for buttons managed by MCP GPIO
-        for btn in self.mcp1_buttons:
-            pin = self.mcp1.get_pin(btn.hw_pin)
-            pin.direction = digitalio.Direction.INPUT
-            pin.pull = digitalio.Pull.UP
-        for btn in self.mcp2_buttons:
-            pin = self.mcp2.get_pin(btn.hw_pin)
-            pin.direction = digitalio.Direction.INPUT
-            pin.pull = digitalio.Pull.UP
+        # Configure all 16 pins on each MCP as input + pullup so calibration can
+        # remap to any pin without re-init, and unmapped pins still read clean.
+        for mcp in (self.mcp1, self.mcp2):
+            for pin_num in range(16):
+                pin = mcp.get_pin(pin_num)
+                pin.direction = digitalio.Direction.INPUT
+                pin.pull = digitalio.Pull.UP
         print("Initialized MCPs")
 
         # initialize the pins for buttons managed by onboard GPIO

@@ -58,3 +58,5 @@ class KeySignatures:
     B_FLAT_MAJOR = KeySignature("Bbmaj", [Notes.B_FLAT_4, Notes.E_FLAT_4])
     F_MAJOR = KeySignature("Fmaj", [Notes.B_FLAT_4])
 
+    C_MINOR = KeySignature("Cmin", [Notes.B_FLAT_4, Notes.E_FLAT_4, Notes.A_FLAT_4])
+

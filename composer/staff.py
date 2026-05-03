@@ -3,7 +3,7 @@ import displayio
 import adafruit_imageload
 
 from composer.key_signature import KeySignature, KeySignatures
-from composer.notes import Accidental, Duration, Note, TimedNote
+from composer.notes import Accidental, Duration, Note, Rest, TimedNote
 from data.config import Config
 
 class Staff(displayio.Group):
@@ -76,6 +76,17 @@ class Staff(displayio.Group):
         Duration.HALF:    8,
         Duration.WHOLE:   8,
     }
+
+    REST_TILE = {
+        Duration.EIGHTH:  5,
+        Duration.QUARTER: 6,
+        Duration.HALF:    7,
+        Duration.WHOLE:   8,
+    }
+    # Pixel within the rest sprite that should land on REST_LEDGER_LINE.
+    REST_PIN_Y = 24
+    # Rests render centered on the middle staff line.
+    REST_LEDGER_LINE = 2.0
 
     LEDGER_LINE_WIDTH = 26  # pixels wide for extra ledger lines
     NOTE_POOL_SIZE = 8
@@ -313,10 +324,10 @@ class Staff(displayio.Group):
             return Accidental.NATURAL
         return note.accidental
 
-    def update_sequence(self, timed_notes: list[TimedNote]) -> None:
+    def update_sequence(self, items) -> None:
         """
-        Renders a list of TimedNote objects onto the dynamic layer of the staff.
-        Notes are centered within their beat-proportional horizontal slots so that,
+        Renders a list of TimedNote / Rest objects onto the dynamic layer of the staff.
+        Items are centered within their beat-proportional horizontal slots so that,
         for example, a whole note sits in the middle of the measure rather than the
         far-left edge.  Assumes 4/4 time (4 beats per measure).
         """
@@ -339,45 +350,62 @@ class Staff(displayio.Group):
 
         current_beat = 0
 
-        for timed_note in timed_notes:
-            note = timed_note.note
-            duration = timed_note.duration
+        for item in items:
+            duration = item.duration
             beats = self.DURATION_BEATS.get(duration, 1)
-
-            # Center the note head within its beat slot
             slot_cx = int(content_x + (current_beat + beats / 2.0) * beat_w)
-            note_y = self._get_y_for_ledger_line(note.ledger_line)
-            pin_x = self.NOTE_PIN_X.get(duration, 8)
 
-            for ll_pos in self._ledger_lines_for_note(note.ledger_line):
-                if self._ledger_pool_next < len(self._ledger_pool):
-                    ll_tg = self._ledger_pool[self._ledger_pool_next]
-                    ll_tg.x = slot_cx - self.LEDGER_LINE_WIDTH // 2
-                    ll_tg.y = self._get_y_for_ledger_line(ll_pos)
-                    self._ledger_pool_next += 1
-
-            acc_type = self._needs_accidental(note)
-            if acc_type and self._acc_pool_next < len(self._acc_pool):
-                if acc_type == Accidental.SHARP:
-                    tile_index = self.ACC_TILE_SHARP
-                elif acc_type == Accidental.FLAT:
-                    tile_index = self.ACC_TILE_FLAT
-                else:
-                    tile_index = self.ACC_TILE_NATURAL
-                acc_tg = self._acc_pool[self._acc_pool_next]
-                acc_tg[0, 0] = tile_index
-                acc_tg.x = slot_cx - pin_x - self.ACC_SPRITE_WIDTH - 2
-                acc_tg.y = note_y - self.ACC_PIN_Y[tile_index]
-                self._acc_pool_next += 1
-
-            if self._note_pool_next < len(self._note_pool):
-                note_tg = self._note_pool[self._note_pool_next]
-                note_tg[0, 0] = self.NOTE_TILE.get(duration, 1)
-                note_tg.x = slot_cx - pin_x
-                note_tg.y = note_y - self.NOTE_PIN_Y.get(duration, 42)
-                self._note_pool_next += 1
+            if isinstance(item, Rest):
+                self._draw_rest(item, slot_cx)
+            else:
+                self._draw_timed_note(item, slot_cx)
 
             current_beat += beats
+
+    def _draw_timed_note(self, timed_note: TimedNote, slot_cx: int) -> None:
+        note = timed_note.note
+        duration = timed_note.duration
+        note_y = self._get_y_for_ledger_line(note.ledger_line)
+        pin_x = self.NOTE_PIN_X.get(duration, 8)
+
+        for ll_pos in self._ledger_lines_for_note(note.ledger_line):
+            if self._ledger_pool_next < len(self._ledger_pool):
+                ll_tg = self._ledger_pool[self._ledger_pool_next]
+                ll_tg.x = slot_cx - self.LEDGER_LINE_WIDTH // 2
+                ll_tg.y = self._get_y_for_ledger_line(ll_pos)
+                self._ledger_pool_next += 1
+
+        acc_type = self._needs_accidental(note)
+        if acc_type and self._acc_pool_next < len(self._acc_pool):
+            if acc_type == Accidental.SHARP:
+                tile_index = self.ACC_TILE_SHARP
+            elif acc_type == Accidental.FLAT:
+                tile_index = self.ACC_TILE_FLAT
+            else:
+                tile_index = self.ACC_TILE_NATURAL
+            acc_tg = self._acc_pool[self._acc_pool_next]
+            acc_tg[0, 0] = tile_index
+            acc_tg.x = slot_cx - pin_x - self.ACC_SPRITE_WIDTH - 2
+            acc_tg.y = note_y - self.ACC_PIN_Y[tile_index]
+            self._acc_pool_next += 1
+
+        if self._note_pool_next < len(self._note_pool):
+            note_tg = self._note_pool[self._note_pool_next]
+            note_tg[0, 0] = self.NOTE_TILE.get(duration, 1)
+            note_tg.x = slot_cx - pin_x
+            note_tg.y = note_y - self.NOTE_PIN_Y.get(duration, 42)
+            self._note_pool_next += 1
+
+    def _draw_rest(self, rest: Rest, slot_cx: int) -> None:
+        if self._note_pool_next >= len(self._note_pool):
+            return
+        rest_y = self._get_y_for_ledger_line(self.REST_LEDGER_LINE)
+        pin_x = self.NOTE_PIN_X.get(rest.duration, 8)
+        rest_tg = self._note_pool[self._note_pool_next]
+        rest_tg[0, 0] = self.REST_TILE.get(rest.duration, self.REST_TILE[Duration.QUARTER])
+        rest_tg.x = slot_cx - pin_x
+        rest_tg.y = rest_y - self.REST_PIN_Y
+        self._note_pool_next += 1
 
     def show_note(self, note: Note, duration: str = Duration.QUARTER) -> None:
         """Renders a single note on the staff. Convenience wrapper around update_sequence."""

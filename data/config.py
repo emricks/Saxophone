@@ -87,8 +87,26 @@ class ColorConfig:
         self.drill_note_color = drill_note_color
 
 class VolumeConfig:
+    # Allowed levels: 1% floor, then 10% steps up to 100%.
+    LEVELS = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
     def __init__(self, volume=0.3):
         self.volume = volume
+
+    def step_up(self):
+        for level in self.LEVELS:
+            if level > self.volume + 0.001:
+                self.volume = level
+                return
+
+    def step_down(self):
+        for level in reversed(self.LEVELS):
+            if level < self.volume - 0.001:
+                self.volume = level
+                return
+
+    def percent(self):
+        return int(round(self.volume * 100))
 
 
 class ButtonPin:

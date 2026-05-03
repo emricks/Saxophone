@@ -12,11 +12,12 @@ class MenuState:
         self.current_menu = menu_data
         self.menu_stack = []
         self.config = config
+        self._config_dirty = False
 
         # The selectable list handles drawing items and selection logic
         header_text = self.current_menu.get("title", self.current_menu.get("text", "MENU"))
         self.selectable_list = SelectableList(title=header_text, config=self.config)
-        
+
         # We hook the SelectableList's UI group to the display
         self.hw.display.root_group = self.selectable_list.ui_group
 
@@ -42,6 +43,9 @@ class MenuState:
                         self.current_menu = self.menu_stack.pop()
                         header_text = self.current_menu.get("title", self.current_menu.get("text", "MENU"))
                         self.selectable_list.set_items(self.current_menu["items"], title=header_text)
+                        if self._config_dirty:
+                            self.config.persist()
+                            self._config_dirty = False
 
                 elif item_type == "menu":
                     if "items" in selected_item and len(selected_item["items"]) > 0:
@@ -63,7 +67,7 @@ class MenuState:
                         drill_note_color=payload.get("drill_note_color")
                     )
                     self.selectable_list.set_colors(self.config.color_data)
-                    self.config.persist()
+                    self._config_dirty = True
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})
                     from states.scale_drill_state import ScaleDrillState
@@ -71,6 +75,9 @@ class MenuState:
                 elif item_type == "play":
                     from states.play_state import PlayState
                     await self._transition_to_state(PlayState)
+                elif item_type == "volume_settings":
+                    from states.volume_settings_state import VolumeSettingsState
+                    await self._transition_to_state(VolumeSettingsState)
                 elif item_type == "song":
                     payload = selected_item.get("payload", {})
                     from states.song_state import SongState

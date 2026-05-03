@@ -9,7 +9,10 @@ The `composer` module provides classes to build, manage, and render musical nota
 Represents a single playable pitch. Key attributes: `name`, `midi_number`, `fingerings` (hardware button masks), `ledger_line` (fractional staff position — see Staff coordinate system below), and `accidental` (`"sharp"`, `"flat"`, `"natural"`, or `None`).
 
 ### `TimedNote`
-A `Note` paired with a `Duration` (`"whole"`, `"half"`, `"quarter"`, `"eighth"`). This is the unit passed to `Staff.update_sequence`.
+A `Note` paired with a `Duration` (`"whole"`, `"half"`, `"quarter"`, `"eighth"`). One of the item types accepted by `Staff.update_sequence`.
+
+### `Rest`
+A duration-only item (`Duration.WHOLE/HALF/QUARTER/EIGHTH`) representing silence. Renders centered on the middle staff line; it consumes a beat slot like a `TimedNote` but draws no pitch, accidental, or ledger lines.
 
 ### `KeySignature`
 Defines the tonal center of the piece, determining which notes are naturally sharp or flat.
@@ -49,7 +52,7 @@ The primary visual container. Inherits from `displayio.Group` so it can be posit
 **Horizontal layout** — `update_sequence` computes a `beat_width` from the available space (after clef and key signature) divided by 4 (beats per measure). Each note is centered within its proportional beat slot: a whole note is centered across the full measure, a half note in its half, etc.
 
 **Public API**
-- `update_sequence(list[TimedNote])` — renders a measure. Safe to call repeatedly; hides all pooled sprites first, then reuses them from index 0.
+- `update_sequence(items)` — renders a measure from a list of `TimedNote` and/or `Rest` objects. Safe to call repeatedly; hides all pooled sprites first, then reuses them from index 0. Rests share the note sprite pool (same sheet).
 - `show_note(note, duration)` — convenience wrapper that calls `update_sequence` with a single-element list.
 
 ## Sprite Assets
@@ -58,7 +61,7 @@ The primary visual container. Inherits from `displayio.Group` so it can be posit
 |---|---|---|
 | Treble clef | `data/img/treble_clef_white.png` | single image |
 | Accidentals | `data/img/accidental_sprite_sheet.png` | 3 × 1 tiles (14×42 px each): flat(0), sharp(1), natural(2) |
-| Notes | `data/img/note_sprite_sheet.png` | 5 × 2 tiles (30×48 px each): top row = eighth(0), quarter(1), half(2), whole(3); bottom row = rests |
+| Notes | `data/img/note_sprite_sheet.png` | 5 × 2 tiles (30×48 px each): top row = eighth(0), quarter(1), half(2), whole(3); bottom row = eighth rest(5), quarter rest(6), half rest(7), whole rest(8) |
 
 All sprites are white-on-transparent; the foreground color is applied via palette at load time so the color scheme is fully driven by `config`.
 
@@ -86,7 +89,7 @@ To show a sprite: move it to the target position and update its tile index. To h
 2. Call `staff.update_sequence(list[TimedNote])` whenever the displayed measure changes.
 3. All pooled sprites are hidden; pool indices reset to 0.
 4. `content_x` is computed as clef width (32px) + key signature width + 8px padding. `beat_width = (staff.width - content_x) / 4`.
-5. For each `TimedNote`: compute the beat-centered X, compute Y from `note.ledger_line`, draw any required extra ledger lines, draw a per-note accidental if needed, place the note sprite.
+5. For each item: compute the beat-centered X. `TimedNote` → compute Y from `note.ledger_line`, draw any required extra ledger lines, draw a per-note accidental if needed, place the note sprite. `Rest` → place the rest sprite on the middle staff line, no ledger/accidental work.
 6. Only the bounds of moved sprites are redrawn by `displayio`.
 
 `staff.show_note(note, duration)` is a convenience wrapper that calls `update_sequence` with a single-element list.

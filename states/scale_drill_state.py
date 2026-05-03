@@ -8,29 +8,75 @@ import terminalio
 from adafruit_display_text import label
 
 from composer.key_signature import KeySignatures
-from composer.notes import Duration, Notes as ComposerNotes, TimedNote
+from composer.notes import Duration, Notes as ComposerNotes, Rest, TimedNote
 from composer.staff import Staff
 from data.config import Config
 from hardware.buttons import Buttons
 from states.play_state import PlayState
 
 
+_DURATION_BY_NAME = {
+    "WHOLE":   Duration.WHOLE,
+    "HALF":    Duration.HALF,
+    "QUARTER": Duration.QUARTER,
+    "EIGHTH":  Duration.EIGHTH,
+}
+
+def parse_drill_item(name):
+    """
+    Parses a drill-payload string into a TimedNote or Rest.
+
+    "REST_QUARTER" / "REST_HALF" / "REST_WHOLE" / "REST_EIGHTH" -> Rest
+    "C_4"           -> TimedNote at quarter (default)
+    "C_4:HALF"      -> TimedNote at the named duration (WHOLE/HALF/QUARTER/EIGHTH)
+    Returns None for unknown names or unknown durations.
+    """
+    if name.startswith("REST_"):
+        rest_duration = _DURATION_BY_NAME.get(name[len("REST_"):])
+        return Rest(rest_duration) if rest_duration is not None else None
+
+    note_name = name
+    duration = Duration.QUARTER
+    if ":" in name:
+        note_name, _, duration_token = name.partition(":")
+        duration = _DURATION_BY_NAME.get(duration_token)
+        if duration is None:
+            return None
+
+    note = ComposerNotes.get_note_by_name(note_name)
+    if note is None:
+        return None
+    return TimedNote(note, duration)
+
+
 class ScaleDrillState(PlayState):
+    DEFAULT_BPM = 72
+    HOLD_FACTOR = 0.7  # fraction of the musical duration the player must hold to advance
+    MIN_HOLD = 0.2    # floor so fast tempos / eighths don't become twitchy
+
+    # Musical beat counts (eighth=0.5, unlike Staff.DURATION_BEATS which is column-width).
+    _HOLD_BEATS = {
+        Duration.WHOLE:   4.0,
+        Duration.HALF:    2.0,
+        Duration.QUARTER: 1.0,
+        Duration.EIGHTH:  0.5,
+    }
+
     def __init__(self, hardware, payload, config):
         self.drill_name = payload.get("name", "Unknown Drill")
         key_sig_name = payload.get("key_signature", "C_MAJOR")
-        self.mode = payload.get("mode", "rand")
+        self.mode = payload.get("mode", "none")
         key_signature = getattr(KeySignatures, key_sig_name, KeySignatures.C_MAJOR)
         super().__init__(hardware, config, title=self.drill_name, key_signature=key_signature)
 
         self.config = config
+        self.bpm = payload.get("bpm", self.DEFAULT_BPM)
         # Scoring attributes
         self.total_score = 0
         self.note_start_time = None
         self.note_played_time = None
         self.MAX_POSSIBLE_PER_NOTE = 5.0  # Placeholder constant
         self.MAX_POSSIBLE_SCORE = 10000
-        self.REQUIRED_HOLD_TIME = 0.5
 
         self.hint_task = None
         self.current_hint_fingering = None
@@ -46,19 +92,20 @@ class ScaleDrillState(PlayState):
         self.score_label.anchored_position = (160, 5)
         self.ui_group.append(self.score_label)
 
-        note_names = payload.get("notes", [])
-        self.notes = [ComposerNotes.get_note_by_name(name) for name in note_names if ComposerNotes.get_note_by_name(name) is not None]
+        item_names = payload.get("notes", [])
+        self.notes = [parse_drill_item(name) for name in item_names]
+        self.notes = [item for item in self.notes if item is not None]
 
-        notes_to_add = []
+        items_to_add = []
         if self.mode == "rand" or self.mode == "revrand":
             # CircuitPython has no random.sample/choices — use random.choice per slot.
-            # Picks with replacement, so the same note can repeat freely.
-            notes_to_add += [random.choice(self.notes) for _ in range(len(self.notes))]
+            # Picks with replacement, so the same item can repeat freely.
+            items_to_add += [random.choice(self.notes) for _ in range(len(self.notes))]
         if self.mode == "reverse" or self.mode == "revrand":
-            notes_to_add += list(reversed(self.notes))
-            notes_to_add.pop(0)
+            items_to_add += list(reversed(self.notes))
+            items_to_add.pop(0)
 
-        self.notes += notes_to_add
+        self.notes += items_to_add
 
         self.SCORE_MULTIPLY_CONSTANT = self.MAX_POSSIBLE_SCORE/(len(self.notes) * self.MAX_POSSIBLE_PER_NOTE) * 1.004
 
@@ -72,8 +119,19 @@ class ScaleDrillState(PlayState):
             self.drill_staff.static_group.pop()
         self.ui_group.insert(1, self.drill_staff)
 
+    def required_hold_for(self, item):
+        """Seconds the player must hold (or rest) to advance past this item."""
+        seconds = (60.0 / self.bpm) * self._HOLD_BEATS[item.duration] * self.HOLD_FACTOR
+        return max(seconds, self.MIN_HOLD)
+
+    def _item_satisfied(self, item, target_note, breathing):
+        """A TimedNote is satisfied by playing it with breath; a Rest by not playing."""
+        if isinstance(item, Rest):
+            return not breathing
+        return target_note == item.note and breathing
+
     async def run(self):
-        drill_note_index = 0
+        drill_index = 0
         last_drawn_index = -1
         self.note_start_time = time.monotonic()
 
@@ -86,15 +144,17 @@ class ScaleDrillState(PlayState):
 
             self.hw.update_button_states()
 
-            if Buttons.L_SELECT.just_pressed or drill_note_index == len(self.notes):
+            if Buttons.L_SELECT.just_pressed or drill_index == len(self.notes):
                 # exit if select button pressed or finished
                 break
 
-            current_note = self.notes[drill_note_index]
-            if drill_note_index != last_drawn_index:
-                self.draw_drill_note(drill_note_index, 3)
+            current_item = self.notes[drill_index]
+            required_hold = self.required_hold_for(current_item)
+
+            if drill_index != last_drawn_index:
+                self.draw_drill_note(drill_index, 3)
                 self.hw.display.refresh()
-                last_drawn_index = drill_note_index
+                last_drawn_index = drill_index
 
             # show playing note
             target_note = self.hw.get_current_note()
@@ -103,27 +163,25 @@ class ScaleDrillState(PlayState):
             breathing = self.hw.breath_sensor.breath_sensor_triggered
             current_time = time.monotonic()
 
-            # 1. DETECTION: Did they start playing the right note?
-            if target_note == current_note and breathing:
+            # 1. DETECTION: Are they satisfying the current item right now?
+            if self._item_satisfied(current_item, target_note, breathing):
                 if self.note_played_time is None:
                     self.note_played_time = current_time
-                    # print(f"Note started! Waiting for 1s hold...")
             else:
-                # If they stop breathing or play the wrong note, the "hold" is broken
+                # Wrong note / breath mismatch breaks the hold
                 if self.note_played_time is not None:
                     self.note_played_time = None
-                    # print("Hold broken! Must start hold from beginning.")
 
             # 2. VALIDATION: Have they held it long enough to earn the score?
             if self.note_played_time is not None:
-                if current_time - self.note_played_time >= self.REQUIRED_HOLD_TIME:
+                if current_time - self.note_played_time >= required_hold:
                     # SUCCESS! Now we calculate and award the score
                     if self.note_start_time is None:
                         self.note_start_time = self.note_played_time
 
                     reaction_time = self.note_played_time - self.note_start_time
                     score = int( (max(0.0, self.MAX_POSSIBLE_PER_NOTE - reaction_time) * self.SCORE_MULTIPLY_CONSTANT) )
-                    score = int( score * (1.1 if drill_note_index == 0 else 1))
+                    score = int( score * (1.1 if drill_index == 0 else 1))
                     score = min(score, int(self.MAX_POSSIBLE_SCORE/len(self.notes)))
                     self.total_score += score
                     self.score_label.text = str(self.total_score)
@@ -142,16 +200,18 @@ class ScaleDrillState(PlayState):
                     # Animate score flash, then advance — sequential keeps display updates isolated
                     await self.animate_score_text()
 
-                    # Move to next note and reset state
-                    drill_note_index += 1
+                    # Move to next item and reset state
+                    drill_index += 1
                     self.note_start_time = time.monotonic()
                     self.note_played_time = None
-                    print(f"Moving to next note. Total score so far: {self.total_score}")
-            
-            # 3. HINT: If they are taking too long, start cycling the fingerings
-            if self.hint_task is None and self.note_start_time is not None:
+                    print(f"Moving to next item. Total score so far: {self.total_score}")
+
+            # 3. HINT: If they are taking too long on a note, start cycling the fingerings.
+            #    Rests have no fingering to hint at, so skip them.
+            if (self.hint_task is None and self.note_start_time is not None
+                    and isinstance(current_item, TimedNote)):
                 if time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2:
-                    self.hint_task = asyncio.create_task(self.cycle_fingerings(current_note))
+                    self.hint_task = asyncio.create_task(self.cycle_fingerings(current_item.note))
 
             # yield control for other code to run
             await asyncio.sleep(0.001)
@@ -166,7 +226,7 @@ class ScaleDrillState(PlayState):
 
         await self.hw.stop_note()
 
-        if drill_note_index == len(self.notes):
+        if drill_index == len(self.notes):
             await self.show_scoreboard()
 
     async def cycle_fingerings(self, note):
@@ -305,6 +365,6 @@ class ScaleDrillState(PlayState):
             self.hw.display.refresh()
             await asyncio.sleep(0.05)
 
-    def draw_drill_note(self, first_note_index, number_of_notes):
-        notes_to_show = self.notes[first_note_index:min(first_note_index+number_of_notes, len(self.notes))]
-        self.drill_staff.update_sequence([TimedNote(note, Duration.QUARTER) for note in notes_to_show])
+    def draw_drill_note(self, first_index, count):
+        items_to_show = self.notes[first_index:min(first_index + count, len(self.notes))]
+        self.drill_staff.update_sequence(items_to_show)

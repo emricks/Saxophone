@@ -17,7 +17,7 @@ class SongState(PlayState):
         self.payload = payload
         
         # Setup the selectable list for songs
-        self.selectable_list = SelectableList(title="Select Song")
+        self.selectable_list = SelectableList(title="Select Song", config=config)
         
         # Load available songs from a directory
         self.songs = self._get_song_list()

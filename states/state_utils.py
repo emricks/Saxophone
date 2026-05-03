@@ -1,20 +1,39 @@
+
 import displayio
 import terminalio
 from adafruit_display_text import label
 
+from data.config import Config, ColorConfig
+
+
 class SelectableList:
-    def __init__(self, title=""):
+    def __init__(self, title="", config: Config = Config()):
         self.items = []
         self.selected_index = 0
         self.scroll_offset = 0
         self.max_visible_items = 4
         self.title = title
+        self.config = config.color_data
         
         self.ui_group = displayio.Group()
         self.labels = []
+
+
+        # Background
+        color_bitmap = displayio.Bitmap(320, 240, 1)
+        self.color_palette = displayio.Palette(1)
+        self.color_palette[0] = self.config.bg_color
+        bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=self.color_palette, x=0, y=0)
+        self.ui_group.append(bg_sprite)
         
-        self.title_label = label.Label(terminalio.FONT, text=self.title, color=0x00AAFF, scale=3, x=10, y=20)
+        self.title_label = label.Label(terminalio.FONT, text=self.title, color=self.config.fg_color, scale=3, x=10, y=20)
         self.ui_group.append(self.title_label)
+
+    def set_colors(self, config: ColorConfig):
+        self.color_palette[0] = config.bg_color
+        self.title_label.color = config.fg_color
+        self.config = config
+        self.render()
         
     def set_items(self, items, title=None):
         self.items = items
@@ -26,7 +45,7 @@ class SelectableList:
         self.render()
 
     def render(self):
-        while len(self.ui_group) > 1:
+        while len(self.ui_group) > 2:
             self.ui_group.pop()
 
         self.labels = []
@@ -39,7 +58,7 @@ class SelectableList:
             # Handle if items are dicts or objects
             text = item.get("text", str(item)) if isinstance(item, dict) else str(item)
             is_selected = (i == self.selected_index)
-            color = 0x00FF00 if is_selected else 0xFFFFFF
+            color = self.config.fingering_color if is_selected else self.config.chart_color
             prefix = "> " if is_selected else "  "
 
             y_pos = 80 + ((i - self.scroll_offset) * 35)

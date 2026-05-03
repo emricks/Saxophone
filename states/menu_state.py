@@ -15,7 +15,7 @@ class MenuState:
 
         # The selectable list handles drawing items and selection logic
         header_text = self.current_menu.get("title", self.current_menu.get("text", "MENU"))
-        self.selectable_list = SelectableList(title=header_text)
+        self.selectable_list = SelectableList(title=header_text, config=self.config)
         
         # We hook the SelectableList's UI group to the display
         self.hw.display.root_group = self.selectable_list.ui_group
@@ -62,6 +62,7 @@ class MenuState:
                         fingering_color=payload.get("fingering_color"),
                         drill_note_color=payload.get("drill_note_color")
                     )
+                    self.selectable_list.set_colors(self.config.color_data)
                     self.config.persist()
                 elif item_type == "scale_drill":
                     payload = selected_item.get("payload", {})

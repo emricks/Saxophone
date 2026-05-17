@@ -27,13 +27,16 @@ def parse_drill_item(name):
     """
     Parses a drill-payload string into a TimedNote or Rest.
 
-    "REST_QUARTER" / "REST_HALF" / "REST_WHOLE" / "REST_EIGHTH" -> Rest
+    "REST"          -> quarter rest (bare REST defaults to quarter, like notes do)
+    "REST:HALF"     -> half rest (also accepts REST:WHOLE / REST:QUARTER / REST:EIGHTH)
     "C_4"           -> TimedNote at quarter (default)
     "C_4:HALF"      -> TimedNote at the named duration (WHOLE/HALF/QUARTER/EIGHTH)
     Returns None for unknown names or unknown durations.
     """
-    if name.startswith("REST_"):
-        rest_duration = _DURATION_BY_NAME.get(name[len("REST_"):])
+    if name == "REST":
+        return Rest(Duration.QUARTER)
+    if name.startswith("REST:"):
+        rest_duration = _DURATION_BY_NAME.get(name[len("REST:"):])
         return Rest(rest_duration) if rest_duration is not None else None
 
     note_name = name

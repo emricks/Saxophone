@@ -49,9 +49,9 @@ class Staff(displayio.Group):
         "F": 7,
     }
 
-    # --- Note sprite sheet layout (150x96, 30x48 tiles) ---
-    # Top row: eighth(0), quarter(1), half(2), whole(3)
-    # Bottom row: eighth rest(5), quarter rest(6), half rest(7), whole rest(8)
+    # --- Note sprite sheet layout (120x96, 30x48 tiles, 4 cols x 2 rows) ---
+    # Top row:    eighth(0), quarter(1), half(2), whole(3)
+    # Bottom row: eighth rest(4), quarter rest(5), half rest(6), whole rest(7)
     NOTE_SHEET_PATH = "data/img/note_sprite_sheet.png"
     NOTE_SPRITE_WIDTH = 30
     NOTE_SPRITE_HEIGHT = 48
@@ -79,10 +79,10 @@ class Staff(displayio.Group):
     }
 
     REST_TILE = {
-        Duration.EIGHTH:  5,
-        Duration.QUARTER: 6,
-        Duration.HALF:    7,
-        Duration.WHOLE:   8,
+        Duration.EIGHTH:  4,
+        Duration.QUARTER: 5,
+        Duration.HALF:    6,
+        Duration.WHOLE:   7,
     }
     # Pixel within the rest sprite that should land on REST_LEDGER_LINE.
     REST_PIN_Y = 24
@@ -123,9 +123,11 @@ class Staff(displayio.Group):
         self._note_pool = []
         self._acc_pool = []
         self._ledger_pool = []
+        self._measure_line_pool = []
         self._note_pool_next = 0
         self._acc_pool_next = 0
         self._ledger_pool_next = 0
+        self._measure_line_pool_next = 0
 
         # Progress-overlay state. Allocated only when enable_progress=True;
         # otherwise these stay None and Staff behaves exactly as before.
@@ -304,6 +306,25 @@ class Staff(displayio.Group):
             self._ledger_pool.append(tg)
             self.dynamic_group.append(tg)
 
+        # Measure-line pool — vertical lines drawn at 4-beat boundaries within
+        # the layout. Sized to span exactly the 5-line staff (top of line 0
+        # through bottom of line 4 inclusive). Lives in static_group alongside
+        # the staff lines: same z-layer (measure lines render behind notes,
+        # matching music-notation convention), and on overlay staves whose
+        # static_group is popped (drill_staff in ScaleDrillState) these get
+        # cleared out the same way the staff lines do — so measure lines only
+        # ever exist on the staff that draws the actual lines.
+        measure_line_height = 4 * self.LEDGER_SPACING + 1
+        measure_bitmap = displayio.Bitmap(1, measure_line_height, 1)
+        measure_palette = displayio.Palette(1)
+        measure_palette[0] = self.config.color_data.fg_color
+        for _ in range(4):  # 4 verticals is plenty for any reasonable window
+            tg = displayio.TileGrid(measure_bitmap, pixel_shader=measure_palette)
+            tg.x = -1000
+            tg.y = -1000
+            self._measure_line_pool.append(tg)
+            self.static_group.append(tg)
+
     def _init_progress_overlay(self) -> None:
         """Allocates two 30x48 bitmaps for progressive note fill:
         - overlay: the on-screen target. Mutated incrementally — never wholesale
@@ -394,6 +415,9 @@ class Staff(displayio.Group):
         Items are centered within their beat-proportional horizontal slots so that,
         for example, a whole note sits in the middle of the measure rather than the
         far-left edge.  Assumes 4/4 time (4 beats per measure).
+
+        Measure lines are no longer drawn here — call `set_measure_lines`
+        separately, on whichever staff should own them.
         """
         for tg in self._note_pool:
             tg.x = -1000
@@ -431,6 +455,46 @@ class Staff(displayio.Group):
                 self._draw_timed_note(item, slot_cx)
 
             current_beat += beats
+
+    def set_measure_lines(self, items, start_beat: float = 0) -> None:
+        """Places measure lines for the given item sequence's layout without
+        touching the note pool. Call this separately from update_sequence so
+        the lines can live on a different staff than the notes (overlay
+        pattern: notes on drill_staff, measure lines on the base staff so
+        they inherit its un-overridden fg_color)."""
+        for tg in self._measure_line_pool:
+            tg.x = -1000
+        self._measure_line_pool_next = 0
+
+        num_ks_acc = len(self.key_signature.accidentals) if self.key_signature else 0
+        content_x = 32 + (num_ks_acc * self.ACC_SPRITE_WIDTH) + 8
+        available_w = self.width - content_x - 4
+        beats_per_measure = 4
+        beat_w = available_w / beats_per_measure
+
+        total_layout_beats = 0
+        for item in items:
+            total_layout_beats += self.DURATION_BEATS.get(item.duration, 1)
+
+        self._draw_measure_lines(start_beat, total_layout_beats, content_x, beat_w, beats_per_measure)
+
+    def _draw_measure_lines(self, start_beat, total_layout_beats, content_x, beat_w, beats_per_measure):
+        """Places measure-line TileGrids at every 4-beat boundary that falls
+        strictly inside the layout's beat range (not at the leftmost edge)."""
+        # First multiple of beats_per_measure at or after start_beat:
+        n = int((start_beat + beats_per_measure - 1) // beats_per_measure)
+        while True:
+            boundary_global = n * beats_per_measure
+            boundary_layout = boundary_global - start_beat
+            if boundary_layout > total_layout_beats:
+                break
+            if boundary_layout > 0:  # don't draw at the leftmost edge
+                if self._measure_line_pool_next < len(self._measure_line_pool):
+                    line_tg = self._measure_line_pool[self._measure_line_pool_next]
+                    line_tg.x = int(content_x + boundary_layout * beat_w)
+                    line_tg.y = self.staff_y_start
+                    self._measure_line_pool_next += 1
+            n += 1
 
     def _draw_timed_note(self, timed_note: TimedNote, slot_cx: int) -> None:
         note = timed_note.note

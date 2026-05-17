@@ -12,6 +12,12 @@ from data.config import Config
 async def main():
     config = Config.load_config()
 
+    # Seed the live drill mode from the persisted default. The ready-screen
+    # toggle in ScaleDrillState mutates SESSION_MODE for the rest of the
+    # session; this restores it on boot.
+    from states.scale_drill_state import ScaleDrillState
+    ScaleDrillState.SESSION_MODE = config.drill_data.default_mode
+
     hw = SaxHardware(config)
     await hw.start_hardware()
 

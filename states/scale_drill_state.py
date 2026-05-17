@@ -51,7 +51,7 @@ def parse_drill_item(name):
 
 class ScaleDrillState(PlayState):
     DEFAULT_BPM = 72
-    HOLD_FACTOR = 0.7  # fraction of the musical duration the player must hold to advance
+    HOLD_FACTOR = 0.9  # fraction of the musical duration the player must hold to advance
     MIN_HOLD = 0.2    # floor so fast tempos / eighths don't become twitchy
 
     # Musical beat counts (eighth=0.5, unlike Staff.DURATION_BEATS which is column-width).
@@ -67,7 +67,7 @@ class ScaleDrillState(PlayState):
         key_sig_name = payload.get("key_signature", "C_MAJOR")
         self.mode = payload.get("mode", "none")
         key_signature = getattr(KeySignatures, key_sig_name, KeySignatures.C_MAJOR)
-        super().__init__(hardware, config, title=self.drill_name, key_signature=key_signature)
+        super().__init__(hardware, config, title=self.drill_name, key_signature=key_signature, enable_progress=True)
 
         self.config = config
         self.bpm = payload.get("bpm", self.DEFAULT_BPM)
@@ -173,6 +173,12 @@ class ScaleDrillState(PlayState):
                     self.note_played_time = None
 
             # 2. VALIDATION: Have they held it long enough to earn the score?
+            #    Also drive the visual hold-progress fill on the play staff overlay.
+            if self.note_played_time is not None:
+                self.staff.set_progress((current_time - self.note_played_time) / required_hold)
+            else:
+                self.staff.set_progress(0.0)
+
             if self.note_played_time is not None:
                 if current_time - self.note_played_time >= required_hold:
                     # SUCCESS! Now we calculate and award the score

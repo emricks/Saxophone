@@ -15,7 +15,7 @@ from hardware.saxophone import SaxHardware
 
 class PlayState:
     STAFF_WIDTH = 212
-    def __init__(self, hardware, config: Config, title="Free Play", key_signature: KeySignature = KeySignatures.C_MAJOR):
+    def __init__(self, hardware, config: Config, title="Free Play", key_signature: KeySignature = KeySignatures.C_MAJOR, enable_progress: bool = False):
         self.hw = hardware
         self.is_running = True
         self.current_note_playing = None
@@ -43,7 +43,7 @@ class PlayState:
         self.ui_group.append(self.title_label)
 
         # Staff
-        self.staff = Staff(width=PlayState.STAFF_WIDTH, config=config, key_signature=key_signature)
+        self.staff = Staff(width=PlayState.STAFF_WIDTH, config=config, key_signature=key_signature, enable_progress=enable_progress)
         self.staff.x = 0
         self.staff.y = (240 - Staff.HEIGHT) // 2
         self.ui_group.append(self.staff)

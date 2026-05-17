@@ -1,4 +1,5 @@
 import math
+import bitmaptools
 import displayio
 import adafruit_imageload
 
@@ -100,13 +101,14 @@ class Staff(displayio.Group):
         Duration.EIGHTH:  1,  # give eighth same column width as quarter for readability
     }
 
-    def __init__(self, width: int, config: Config, key_signature: KeySignature = KeySignatures.C_MAJOR, time_signature: None = None) -> None:
+    def __init__(self, width: int, config: Config, key_signature: KeySignature = KeySignatures.C_MAJOR, time_signature: None = None, enable_progress: bool = False) -> None:
         super().__init__()
         self.width = width
         self.height = self.HEIGHT
         self.config = config
         self.key_signature = key_signature
         self.time_signature = time_signature
+        self.enable_progress = enable_progress
 
         self.static_group = displayio.Group()
         self.dynamic_group = displayio.Group()
@@ -125,11 +127,22 @@ class Staff(displayio.Group):
         self._acc_pool_next = 0
         self._ledger_pool_next = 0
 
+        # Progress-overlay state. Allocated only when enable_progress=True;
+        # otherwise these stay None and Staff behaves exactly as before.
+        self._note_bitmap_source = None
+        self._progress_overlay_bitmap = None
+        self._progress_overlay_tilegrid = None
+        self._progress_tile_cache = None
+        self._progress_current_tile = None
+        self._progress_hide_top = -1
+
         self._draw_static_lines()
         self._draw_clef()
         if self.key_signature:
             self._draw_key_signature()
         self._init_dynamic_pool()
+        if self.enable_progress:
+            self._init_progress_overlay()
 
     def _draw_static_lines(self) -> None:
         line_bitmap = displayio.Bitmap(self.width, 1, 1)
@@ -237,6 +250,10 @@ class Staff(displayio.Group):
                 note_palette.make_transparent(1)
                 note_palette[0] = self.config.color_data.fg_color
 
+            # Retain a reference so the progress overlay can use this bitmap
+            # as a pristine source (it's never mutated by the pool path).
+            self._note_bitmap_source = note_bitmap
+
             for _ in range(self.NOTE_POOL_SIZE):
                 tg = displayio.TileGrid(
                     note_bitmap,
@@ -286,6 +303,53 @@ class Staff(displayio.Group):
             tg.y = -1000
             self._ledger_pool.append(tg)
             self.dynamic_group.append(tg)
+
+    def _init_progress_overlay(self) -> None:
+        """Allocates two 30x48 bitmaps for progressive note fill:
+        - overlay: the on-screen target. Mutated incrementally — never wholesale
+          rebuilt — so there is no intermediate 'fully filled' frame that displayio's
+          auto-refresh could catch as a flash.
+        - tile_cache: holds the current note's silhouette so set_progress can copy
+          newly-revealed rows out of it without sub-region blits from the multi-tile
+          spritesheet."""
+        if self._note_bitmap_source is None:
+            return
+
+        W, H = self.NOTE_SPRITE_WIDTH, self.NOTE_SPRITE_HEIGHT
+
+        self._progress_overlay_bitmap = displayio.Bitmap(W, H, 2)
+        self._progress_tile_cache = displayio.Bitmap(W, H, 2)
+
+        bitmaptools.fill_region(self._progress_overlay_bitmap, 0, 0, W, H, 1)
+        bitmaptools.fill_region(self._progress_tile_cache,     0, 0, W, H, 1)
+
+        overlay_palette = displayio.Palette(2)
+        overlay_palette[0] = self.config.color_data.fingering_color
+        overlay_palette.make_transparent(1)
+
+        self._progress_overlay_tilegrid = displayio.TileGrid(
+            self._progress_overlay_bitmap,
+            pixel_shader=overlay_palette,
+        )
+        self._progress_overlay_tilegrid.x = -1000
+        self._progress_overlay_tilegrid.y = -1000
+        self.dynamic_group.append(self._progress_overlay_tilegrid)
+
+    def _load_tile_into_cache(self, tile_index: int) -> None:
+        """Copies one 30x48 tile from the multi-tile spritesheet into the tile_cache
+        via direct pixel access (avoids sub-region blit). Runs once per note advance."""
+        if self._progress_tile_cache is None or self._note_bitmap_source is None:
+            return
+        W, H = self.NOTE_SPRITE_WIDTH, self.NOTE_SPRITE_HEIGHT
+        cols = self._note_bitmap_source.width // W
+        src_x = (tile_index % cols) * W
+        src_y = (tile_index // cols) * H
+        src = self._note_bitmap_source
+        dst = self._progress_tile_cache
+        for y in range(H):
+            sy = src_y + y
+            for x in range(W):
+                dst[x, y] = src[src_x + x, sy]
 
     def _ledger_lines_for_note(self, ledger_line: float) -> list[int]:
         """Returns ledger_line positions (integers) that must be drawn for this note."""
@@ -338,6 +402,12 @@ class Staff(displayio.Group):
         for tg in self._ledger_pool:
             tg.x = -1000
 
+        if self.enable_progress and self._progress_overlay_tilegrid is not None:
+            self._progress_overlay_tilegrid.x = -1000
+            self._progress_overlay_tilegrid.y = -1000
+            self._progress_current_tile = None
+            self._progress_hide_top = -1
+
         self._note_pool_next = 0
         self._acc_pool_next = 0
         self._ledger_pool_next = 0
@@ -389,12 +459,75 @@ class Staff(displayio.Group):
             acc_tg.y = note_y - self.ACC_PIN_Y[tile_index]
             self._acc_pool_next += 1
 
+        # Always draw the silhouette from the pool so the played note is visible
+        # regardless of fill state (wrong notes need to appear too).
         if self._note_pool_next < len(self._note_pool):
             note_tg = self._note_pool[self._note_pool_next]
             note_tg[0, 0] = self.NOTE_TILE.get(duration, 1)
             note_tg.x = slot_cx - pin_x
             note_tg.y = note_y - self.NOTE_PIN_Y.get(duration, 42)
             self._note_pool_next += 1
+
+        # When progress is enabled, layer the fill overlay on top of the pool silhouette.
+        # The overlay sits at the same position; its bottom-up reveal paints in a
+        # contrasting color over the pool's silhouette as the user holds.
+        if self.enable_progress and self._progress_overlay_tilegrid is not None:
+            pin_y = self.NOTE_PIN_Y.get(duration, 42)
+            self._progress_overlay_tilegrid.x = slot_cx - pin_x
+            self._progress_overlay_tilegrid.y = note_y - pin_y
+            tile_index = self.NOTE_TILE.get(duration, 1)
+            self._progress_current_tile = tile_index
+            # Cache this note's silhouette so set_progress() can copy newly-revealed
+            # rows out of it (full-source coords, no sub-region blits required).
+            self._load_tile_into_cache(tile_index)
+            # Reset overlay to fully transparent so the starting state matches the
+            # tracked hide_top (= H, fully hidden).
+            bitmaptools.fill_region(
+                self._progress_overlay_bitmap,
+                0, 0, self.NOTE_SPRITE_WIDTH, self.NOTE_SPRITE_HEIGHT,
+                1,
+            )
+            self._progress_hide_top = self.NOTE_SPRITE_HEIGHT
+
+    def set_progress(self, fraction: float) -> None:
+        """Renders a bottom-up fill (0.0–1.0) of the currently-shown note's silhouette
+        into the dedicated overlay.
+
+        Mutates only the rows that crossed a pixel boundary since the last call,
+        so the overlay never holds an intermediate 'fully filled' state that
+        displayio's auto-refresh could catch as a flash.
+
+        No-op if enable_progress=False or no current note."""
+        if not self.enable_progress or self._progress_overlay_bitmap is None:
+            return
+        if self._progress_current_tile is None or self._progress_tile_cache is None:
+            return
+
+        if fraction < 0.0:
+            fraction = 0.0
+        elif fraction > 1.0:
+            fraction = 1.0
+        H = self.NOTE_SPRITE_HEIGHT
+        W = self.NOTE_SPRITE_WIDTH
+        hide_top = H - int(fraction * H)
+
+        prev = self._progress_hide_top
+        if hide_top == prev:
+            return
+        self._progress_hide_top = hide_top
+
+        overlay = self._progress_overlay_bitmap
+        cache = self._progress_tile_cache
+
+        if hide_top < prev:
+            # Fill grew: reveal rows [hide_top, prev) by copying from the silhouette cache.
+            # Manual pixel copy keeps source/dest coords aligned without a sub-region blit.
+            for y in range(hide_top, prev):
+                for x in range(W):
+                    overlay[x, y] = cache[x, y]
+        else:
+            # Fill shrank: hide rows [prev, hide_top) by stamping the transparent index.
+            bitmaptools.fill_region(overlay, 0, prev, W, hide_top, 1)
 
     def _draw_rest(self, rest: Rest, slot_cx: int) -> None:
         if self._note_pool_next >= len(self._note_pool):

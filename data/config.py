@@ -50,6 +50,7 @@ class Config:
     def __init__(self):
         self.color_data = ColorConfig()
         self.volume_data = VolumeConfig()
+        self.drill_data = DrillConfig()
         self.button_data = ButtonConfig()
 
     @classmethod
@@ -88,7 +89,7 @@ class ColorConfig:
 
 class VolumeConfig:
     # Allowed levels: 1% floor, then 10% steps up to 100%.
-    LEVELS = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    LEVELS = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0]
 
     def __init__(self, volume=0.3):
         self.volume = volume
@@ -107,6 +108,45 @@ class VolumeConfig:
 
     def percent(self):
         return int(round(self.volume * 100))
+
+
+class DrillConfig:
+    """Persisted defaults for drill timing. Used by ScaleDrillState at startup;
+    the live session value (ScaleDrillState.SESSION_MODE) is seeded from
+    `default_mode` on boot and may diverge mid-session via the ready-screen
+    toggle. The Drill settings screen writes both back at the same time.
+
+    Owns the canonical MODE_TIMED / MODE_EASY constants — ScaleDrillState
+    re-exports them so callers don't need to import data.config to compare
+    against a mode value."""
+
+    MODE_TIMED = "timed"
+    MODE_EASY = "easy"
+    MODES = (MODE_TIMED, MODE_EASY)
+
+    BPM_STEP = 2
+    BPM_MIN = 40
+    BPM_MAX = 160
+
+    def __init__(self, default_bpm=48, default_mode=MODE_TIMED, hold_factor=0.75):
+        self.default_bpm = default_bpm
+        self.default_mode = default_mode
+        # Fraction of musical duration that counts as fully satisfied — the
+        # remaining (1 - hold_factor) is breathing room. Used for both fill
+        # display (reaches 100% at this point) and timed-mode scoring.
+        self.hold_factor = hold_factor
+
+    def step_bpm_up(self):
+        self.default_bpm = min(self.default_bpm + self.BPM_STEP, self.BPM_MAX)
+
+    def step_bpm_down(self):
+        self.default_bpm = max(self.default_bpm - self.BPM_STEP, self.BPM_MIN)
+
+    def toggle_mode(self):
+        self.default_mode = (
+            DrillConfig.MODE_EASY if self.default_mode == DrillConfig.MODE_TIMED
+            else DrillConfig.MODE_TIMED
+        )
 
 
 class ButtonPin:

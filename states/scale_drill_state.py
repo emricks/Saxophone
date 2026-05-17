@@ -10,8 +10,9 @@ from adafruit_display_text import label
 from composer.key_signature import KeySignatures
 from composer.notes import Duration, Notes as ComposerNotes, Rest, TimedNote
 from composer.staff import Staff
-from data.config import Config
+from data.config import Config, DrillConfig
 from hardware.buttons import Buttons
+from hardware.metronome import Metronome
 from states.play_state import PlayState
 
 
@@ -50,9 +51,18 @@ def parse_drill_item(name):
 
 
 class ScaleDrillState(PlayState):
-    DEFAULT_BPM = 72
-    HOLD_FACTOR = 0.9  # fraction of the musical duration the player must hold to advance
-    MIN_HOLD = 0.2    # floor so fast tempos / eighths don't become twitchy
+    MIN_HOLD = 0.2    # easy-mode floor so fast tempos / eighths don't become twitchy
+    LEAD_IN_BEATS = 4  # number of quarter rests prepended in timed mode (1 measure of 4/4)
+    PULSE_FLASH_S = 0.15  # how long the mode label stays in the pulse color after a beat
+
+    # Re-export DrillConfig's canonical mode constants so callers within this
+    # module don't have to import data.config just to compare a mode value.
+    MODE_TIMED = DrillConfig.MODE_TIMED
+    MODE_EASY = DrillConfig.MODE_EASY
+    # Class-level — persists in-memory across drills within a session, gets
+    # re-seeded from config.drill_data.default_mode on boot (see code.py).
+    # The ready-phase R_1 toggle and the Drill settings screen both write here.
+    SESSION_MODE = MODE_TIMED
 
     # Musical beat counts (eighth=0.5, unlike Staff.DURATION_BEATS which is column-width).
     _HOLD_BEATS = {
@@ -70,7 +80,9 @@ class ScaleDrillState(PlayState):
         super().__init__(hardware, config, title=self.drill_name, key_signature=key_signature, enable_progress=True)
 
         self.config = config
-        self.bpm = payload.get("bpm", self.DEFAULT_BPM)
+        # Payload BPM wins (per-drill override); otherwise fall back to the
+        # user's persisted drill default. DrillConfig owns the default value.
+        self.bpm = payload.get("bpm", config.drill_data.default_bpm)
         # Scoring attributes
         self.total_score = 0
         self.note_start_time = None
@@ -91,6 +103,57 @@ class ScaleDrillState(PlayState):
         self.score_label.anchor_point = (0.5, 0.0)
         self.score_label.anchored_position = (160, 5)
         self.ui_group.append(self.score_label)
+
+        # Mode label sits directly under the drill name (title is at y=15 in
+        # PlayState). Doubles as the metronome pulse indicator in timed mode —
+        # color flashes on each beat.
+        self.mode_label = label.Label(
+            terminalio.FONT,
+            text=self._mode_label_text(),
+            color=config.color_data.fg_color,
+            scale=1,
+        )
+        self.mode_label.anchor_point = (0.0, 0.0)
+        self.mode_label.anchored_position = (10, 28)
+        self.ui_group.append(self.mode_label)
+
+        # Ready-phase prompts (two lines below the staff). Removed once the
+        # drill starts. fingering_color makes them visually distinct from the
+        # default fg_color used by every other on-screen element.
+        self.ready_prompt_select = label.Label(
+            terminalio.FONT,
+            text="SELECT: start",
+            color=config.color_data.fingering_color,
+            scale=1,
+        )
+        self.ready_prompt_select.anchor_point = (0.5, 0.5)
+        self.ready_prompt_select.anchored_position = (160, 210)
+        self.ui_group.append(self.ready_prompt_select)
+
+        self.ready_prompt_toggle = label.Label(
+            terminalio.FONT,
+            text="R1: toggle mode",
+            color=config.color_data.fingering_color,
+            scale=1,
+        )
+        self.ready_prompt_toggle.anchor_point = (0.5, 0.5)
+        self.ready_prompt_toggle.anchored_position = (160, 226)
+        self.ui_group.append(self.ready_prompt_toggle)
+
+        # Metronome — constructed lazily when timed mode actually starts.
+        self.metronome = None
+
+        # Timed-mode bookkeeping. current_item_start_time is the wall-clock
+        # anchor for the current drill item; the next item's anchor is just
+        # this + musical_duration, which keeps the grid drift-free relative
+        # to the metronome. _timed_satisfied_seconds is the cumulative time
+        # the user has satisfied the current item — scoring is proportional
+        # to satisfied_seconds / musical_duration. _timed_satisfied_since is
+        # the start of the current in-progress satisfaction streak (None
+        # when not currently satisfying).
+        self.current_item_start_time = None
+        self._timed_satisfied_seconds = 0.0
+        self._timed_satisfied_since = None
 
         item_names = payload.get("notes", [])
         self.notes = [parse_drill_item(name) for name in item_names]
@@ -119,9 +182,17 @@ class ScaleDrillState(PlayState):
             self.drill_staff.static_group.pop()
         self.ui_group.insert(1, self.drill_staff)
 
+    def musical_duration_for(self, item):
+        """Seconds the item occupies musically — the fill grows to 100% over
+        this duration, matching the metronome's beat timeline."""
+        return (60.0 / self.bpm) * self._HOLD_BEATS[item.duration]
+
     def required_hold_for(self, item):
-        """Seconds the player must hold (or rest) to advance past this item."""
-        seconds = (60.0 / self.bpm) * self._HOLD_BEATS[item.duration] * self.HOLD_FACTOR
+        """Seconds the player must hold (or rest) to advance past this item.
+        Slightly less than the musical duration (hold_factor) so they can drop
+        off the last sliver of the note without penalty. MIN_HOLD is a floor
+        for very fast tempos / eighths so it doesn't get twitchy."""
+        seconds = self.musical_duration_for(item) * self.config.drill_data.hold_factor
         return max(seconds, self.MIN_HOLD)
 
     def _item_satisfied(self, item, target_note, breathing):
@@ -130,7 +201,84 @@ class ScaleDrillState(PlayState):
             return not breathing
         return target_note == item.note and breathing
 
+    def _mode_label_text(self):
+        return "[TIMED]" if ScaleDrillState.SESSION_MODE == self.MODE_TIMED else "[EASY]"
+
+    def _on_beat(self, beat_time):
+        """Single entry point for everything that happens on a metronome beat.
+        Called from Metronome's internal task — synchronous, runs after the
+        click fires.
+
+        Today: spawn the visual pulse flash. Coming next: drive drill_index
+        advancement and per-note scoring in strict-timing mode. Adding those
+        is a new branch here, not a new polling loop somewhere else."""
+        asyncio.create_task(self._flash_pulse())
+
+    async def _flash_pulse(self):
+        """Briefly recolor the mode label so the user sees the beat. Run as a
+        task so it doesn't block the metronome's beat loop."""
+        self.mode_label.color = self.config.color_data.drill_note_color
+        await asyncio.sleep(self.PULSE_FLASH_S)
+        self.mode_label.color = self.config.color_data.fg_color
+
+    async def _ready_phase(self):
+        """Pre-drill: clean screen with just title, mode indicator, and prompts.
+        Waits for SELECT to start or R_1 to toggle mode. The staff, drill notes,
+        and fingering chart all stay hidden until the drill actually begins."""
+        if self.hw.display.root_group != self.ui_group:
+            self.hw.display.root_group = self.ui_group
+
+        # Hide the staves so the ready screen doesn't show notes or a clef.
+        self.staff.hidden = True
+        self.drill_staff.hidden = True
+        # chart_sprite isn't in ui_group yet — it gets added after ready phase.
+
+        self.hw.display.refresh()
+
+        while self.is_running:
+            self.hw.update_button_states()
+
+            if Buttons.L_SELECT.just_pressed:
+                break
+            if Buttons.R_1.just_pressed:
+                ScaleDrillState.SESSION_MODE = (
+                    self.MODE_EASY if ScaleDrillState.SESSION_MODE == self.MODE_TIMED
+                    else self.MODE_TIMED
+                )
+                self.mode_label.text = self._mode_label_text()
+                self.hw.display.refresh()
+
+            await asyncio.sleep(0.01)
+
+        # Restore visibility and tear down the ready-only prompts.
+        self.staff.hidden = False
+        self.drill_staff.hidden = False
+        if self.ready_prompt_select in self.ui_group:
+            self.ui_group.remove(self.ready_prompt_select)
+        if self.ready_prompt_toggle in self.ui_group:
+            self.ui_group.remove(self.ready_prompt_toggle)
+        self.hw.display.refresh()
+
     async def run(self):
+        await self._ready_phase()
+        if not self.is_running:
+            return
+
+        # Timed-mode setup: prepend lead-in rests so the user has a count-in,
+        # then start the metronome. Recompute the score multiplier because
+        # len(self.notes) just grew.
+        if ScaleDrillState.SESSION_MODE == self.MODE_TIMED:
+            lead_in = [Rest(Duration.QUARTER) for _ in range(self.LEAD_IN_BEATS)]
+            self.notes = lead_in + self.notes
+            self.SCORE_MULTIPLY_CONSTANT = (
+                self.MAX_POSSIBLE_SCORE / (len(self.notes) * self.MAX_POSSIBLE_PER_NOTE) * 1.004
+            )
+            self.metronome = Metronome(self.hw, on_beat=self._on_beat)
+            # Anchor the first item to the same monotonic instant the metronome
+            # starts at — beat boundaries and item boundaries then share a grid.
+            self.current_item_start_time = time.monotonic()
+            self.metronome.start(self.bpm)
+
         drill_index = 0
         last_drawn_index = -1
         self.note_start_time = time.monotonic()
@@ -149,7 +297,15 @@ class ScaleDrillState(PlayState):
                 break
 
             current_item = self.notes[drill_index]
-            required_hold = self.required_hold_for(current_item)
+            musical_duration = self.musical_duration_for(current_item)
+            # Timed mode skips MIN_HOLD: the beat ticks regardless of the user,
+            # so there's no twitchy-advance concern at fast tempos. Without
+            # this, MIN_HOLD could push required_hold above musical_duration
+            # for short items and the fill would never reach 100%.
+            if ScaleDrillState.SESSION_MODE == self.MODE_TIMED:
+                required_hold = musical_duration * self.config.drill_data.hold_factor
+            else:
+                required_hold = self.required_hold_for(current_item)
 
             if drill_index != last_drawn_index:
                 self.draw_drill_note(drill_index, 3)
@@ -163,25 +319,78 @@ class ScaleDrillState(PlayState):
             breathing = self.hw.breath_sensor.breath_sensor_triggered
             current_time = time.monotonic()
 
-            # 1. DETECTION: Are they satisfying the current item right now?
-            if self._item_satisfied(current_item, target_note, breathing):
-                if self.note_played_time is None:
-                    self.note_played_time = current_time
-            else:
-                # Wrong note / breath mismatch breaks the hold
-                if self.note_played_time is not None:
+            satisfied_now = self._item_satisfied(current_item, target_note, breathing)
+
+            if ScaleDrillState.SESSION_MODE == self.MODE_TIMED:
+                # Timed mode: fill is anchored to the beat grid. Advance fires
+                # on the full musical_duration regardless of whether they
+                # played, but fill reaches 100% at required_hold (hold_factor
+                # of the beat) so the last sliver is free breathing room.
+                elapsed_in_item = current_time - self.current_item_start_time
+                self.staff.set_progress(elapsed_in_item / required_hold)
+
+                # Track cumulative satisfied time as opening/closing streaks.
+                if satisfied_now:
+                    if self._timed_satisfied_since is None:
+                        self._timed_satisfied_since = current_time
+                else:
+                    if self._timed_satisfied_since is not None:
+                        self._timed_satisfied_seconds += current_time - self._timed_satisfied_since
+                        self._timed_satisfied_since = None
+
+                if elapsed_in_item >= musical_duration:
+                    # Close any in-progress streak at the item boundary so it
+                    # doesn't leak into the next item. If they're still
+                    # holding, the streak picks up from the boundary instant
+                    # against the next item's window.
+                    item_end = self.current_item_start_time + musical_duration
+                    if self._timed_satisfied_since is not None:
+                        self._timed_satisfied_seconds += item_end - self._timed_satisfied_since
+                        self._timed_satisfied_since = item_end
+                    # Score caps at required_hold, not musical_duration — playing
+                    # the required_hold window earns a full slice; the remaining
+                    # ~20% of the beat is breathing room and doesn't penalize.
+                    satisfied_fraction = min(1.0, self._timed_satisfied_seconds / required_hold)
+                    slice_max = int(self.MAX_POSSIBLE_SCORE / len(self.notes))
+                    slice_score = int(slice_max * satisfied_fraction)
+                    if slice_score > 0:
+                        self.total_score += slice_score
+                        self.score_label.text = str(self.total_score)
+
+                    if self.hint_task is not None:
+                        self.hint_task.cancel()
+                        self.hint_task = None
+                    if self.current_hint_fingering is not None:
+                        await self.clear_specific_fingering(self.current_hint_fingering)
+                        self.current_hint_fingering = None
+
+                    # Keep the next item's anchor on the same grid as the
+                    # metronome by adding musical_duration — using monotonic()
+                    # here would let drift creep in.
+                    drill_index += 1
+                    self.current_item_start_time += musical_duration
+                    self._timed_satisfied_seconds = 0.0
+                    self.note_start_time = time.monotonic()
                     self.note_played_time = None
-
-            # 2. VALIDATION: Have they held it long enough to earn the score?
-            #    Also drive the visual hold-progress fill on the play staff overlay.
-            if self.note_played_time is not None:
-                self.staff.set_progress((current_time - self.note_played_time) / required_hold)
+                    # Skip animate_score_text in timed mode — it blocks the
+                    # timeline. Score updates in-place via score_label.
             else:
-                self.staff.set_progress(0.0)
+                # Easy mode: event-driven advance based on hold satisfaction.
+                if satisfied_now:
+                    if self.note_played_time is None:
+                        self.note_played_time = current_time
+                else:
+                    if self.note_played_time is not None:
+                        self.note_played_time = None
 
-            if self.note_played_time is not None:
-                if current_time - self.note_played_time >= required_hold:
-                    # SUCCESS! Now we calculate and award the score
+                # Fill reaches 100% at required_hold so the visual cue and the
+                # advance threshold match — when the note looks done, it is done.
+                if self.note_played_time is not None:
+                    self.staff.set_progress((current_time - self.note_played_time) / required_hold)
+                else:
+                    self.staff.set_progress(0.0)
+
+                if self.note_played_time is not None and current_time - self.note_played_time >= required_hold:
                     if self.note_start_time is None:
                         self.note_start_time = self.note_played_time
 
@@ -194,19 +403,15 @@ class ScaleDrillState(PlayState):
 
                     print(f"Success! Score awarded: {score}")
 
-                    # Cancel hint cycle if it's running
                     if self.hint_task is not None:
                         self.hint_task.cancel()
                         self.hint_task = None
-
                     if self.current_hint_fingering is not None:
                         await self.clear_specific_fingering(self.current_hint_fingering)
                         self.current_hint_fingering = None
 
-                    # Animate score flash, then advance — sequential keeps display updates isolated
                     await self.animate_score_text()
 
-                    # Move to next item and reset state
                     drill_index += 1
                     self.note_start_time = time.monotonic()
                     self.note_played_time = None
@@ -219,8 +424,15 @@ class ScaleDrillState(PlayState):
                 if time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2:
                     self.hint_task = asyncio.create_task(self.cycle_fingerings(current_item.note))
 
+            # No beat-related polling here — beat-driven side effects (visual
+            # pulse, and eventually drill advancement) all flow through the
+            # metronome's on_beat hook, dispatched by self._on_beat.
+
             # yield control for other code to run
             await asyncio.sleep(0.001)
+
+        if self.metronome is not None:
+            self.metronome.stop()
 
         # Cancel any leftover hint tasks upon exiting
         if self.hint_task is not None:
@@ -373,4 +585,15 @@ class ScaleDrillState(PlayState):
 
     def draw_drill_note(self, first_index, count):
         items_to_show = self.notes[first_index:min(first_index + count, len(self.notes))]
+        # Accumulate the layout-beat position of the first visible item so the
+        # staff can draw measure lines at the right places as the window scrolls.
+        # Uses Staff.DURATION_BEATS (the column-width measure) for consistency
+        # with how the layout itself positions items.
+        start_beat = 0
+        for i in range(first_index):
+            start_beat += Staff.DURATION_BEATS.get(self.notes[i].duration, 1)
         self.drill_staff.update_sequence(items_to_show)
+        # Measure lines render on the base staff (not drill_staff) so they
+        # share the staff-line color source. drill_staff's fg_color is
+        # overridden to drill_note_color; the base staff is unmodified.
+        self.staff.set_measure_lines(items_to_show, start_beat=start_beat)

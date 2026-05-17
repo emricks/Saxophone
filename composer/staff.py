@@ -137,6 +137,11 @@ class Staff(displayio.Group):
         self._progress_tile_cache = None
         self._progress_current_tile = None
         self._progress_hide_top = -1
+        # Topmost non-transparent row in the current tile's silhouette. Fill
+        # ramps from H up to this row (not 0) so a whole note — which only
+        # occupies the bottom third of the tile — doesn't appear "full" at
+        # ~33% fraction.
+        self._progress_glyph_top = 0
 
         self._draw_static_lines()
         self._draw_clef()
@@ -358,7 +363,11 @@ class Staff(displayio.Group):
 
     def _load_tile_into_cache(self, tile_index: int) -> None:
         """Copies one 30x48 tile from the multi-tile spritesheet into the tile_cache
-        via direct pixel access (avoids sub-region blit). Runs once per note advance."""
+        via direct pixel access (avoids sub-region blit). Runs once per note advance.
+        Also records the topmost row containing any ink (palette index 0) so the
+        fill range can be scoped to the glyph extent — a whole note's oval lives
+        in the bottom of the tile and shouldn't be "full" before the reveal
+        reaches it."""
         if self._progress_tile_cache is None or self._note_bitmap_source is None:
             return
         W, H = self.NOTE_SPRITE_WIDTH, self.NOTE_SPRITE_HEIGHT
@@ -367,10 +376,18 @@ class Staff(displayio.Group):
         src_y = (tile_index // cols) * H
         src = self._note_bitmap_source
         dst = self._progress_tile_cache
+        glyph_top = H  # default = empty tile
         for y in range(H):
             sy = src_y + y
+            row_has_ink = False
             for x in range(W):
-                dst[x, y] = src[src_x + x, sy]
+                v = src[src_x + x, sy]
+                dst[x, y] = v
+                if v == 0 and not row_has_ink:
+                    row_has_ink = True
+            if row_has_ink and glyph_top == H:
+                glyph_top = y
+        self._progress_glyph_top = glyph_top
 
     def _ledger_lines_for_note(self, ledger_line: float) -> list[int]:
         """Returns ledger_line positions (integers) that must be drawn for this note."""
@@ -447,6 +464,12 @@ class Staff(displayio.Group):
         for item in items:
             duration = item.duration
             beats = self.DURATION_BEATS.get(duration, 1)
+            # The staff is sized for one measure of horizontal real estate;
+            # anything beyond that would render under the fingering chart.
+            # Truncate silently — callers can pass lookahead-sized windows
+            # without worrying about overflow.
+            if current_beat + beats > beats_per_measure:
+                break
             slot_cx = int(content_x + (current_beat + beats / 2.0) * beat_w)
 
             if isinstance(item, Rest):
@@ -472,9 +495,15 @@ class Staff(displayio.Group):
         beats_per_measure = 4
         beat_w = available_w / beats_per_measure
 
+        # Mirror update_sequence's one-measure cap so measure lines never get
+        # placed past the staff edge (which would land them under the
+        # fingering chart).
         total_layout_beats = 0
         for item in items:
-            total_layout_beats += self.DURATION_BEATS.get(item.duration, 1)
+            beats = self.DURATION_BEATS.get(item.duration, 1)
+            if total_layout_beats + beats > beats_per_measure:
+                break
+            total_layout_beats += beats
 
         self._draw_measure_lines(start_beat, total_layout_beats, content_x, beat_w, beats_per_measure)
 
@@ -573,7 +602,12 @@ class Staff(displayio.Group):
             fraction = 1.0
         H = self.NOTE_SPRITE_HEIGHT
         W = self.NOTE_SPRITE_WIDTH
-        hide_top = H - int(fraction * H)
+        # Fill ramps over the glyph's actual vertical extent, not the full
+        # tile. fraction=1.0 reveals down to glyph_top; anything above that
+        # row is transparent in the silhouette anyway.
+        glyph_top = self._progress_glyph_top
+        fill_range = H - glyph_top
+        hide_top = H - int(fraction * fill_range)
 
         prev = self._progress_hide_top
         if hide_top == prev:

@@ -11,6 +11,16 @@ class Duration:
     QUARTER: str = "quarter"
     EIGHTH: str = "eighth"
 
+    # Canonical musical-beat values. Use for anything that reasons about
+    # musical time (scoring, scroll position, lead-in). Not to be confused
+    # with rendering width — Staff owns its own layout-weight curve.
+    BEATS = {
+        WHOLE:   4.0,
+        HALF:    2.0,
+        QUARTER: 1.0,
+        EIGHTH:  0.5,
+    }
+
 class Rest:
     def __init__(self, duration: str) -> None:
         self.duration = duration

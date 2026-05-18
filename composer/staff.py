@@ -18,16 +18,20 @@ class Staff(displayio.Group):
     HEIGHT = 13 * LEDGER_SPACING
 
     # --- Accidental sprite sheet layout ---
-    ACC_SPRITE_WIDTH = 14
-    ACC_SPRITE_HEIGHT = 42
+    ACC_SPRITE_WIDTH = 12
+    ACC_SPRITE_HEIGHT = 36
+    # Horizontal step between key-signature accidentals. Smaller than
+    # ACC_SPRITE_WIDTH because the sprites have transparent padding on each
+    # side — overlap is invisible and buys back staff width for notes.
+    ACC_KEY_STRIDE = 9
     ACC_TILE_FLAT = 0
     ACC_TILE_SHARP = 1
     ACC_TILE_NATURAL = 2
 
     ACC_PIN_Y = {
-        ACC_TILE_SHARP:   21,
-        ACC_TILE_FLAT:    30,
-        ACC_TILE_NATURAL: 21,
+        ACC_TILE_SHARP:   18,
+        ACC_TILE_FLAT:    26,
+        ACC_TILE_NATURAL: 18,
     }
 
     SHARP_SLOTS = {
@@ -92,14 +96,19 @@ class Staff(displayio.Group):
     LEDGER_LINE_WIDTH = 26  # pixels wide for extra ledger lines
     NOTE_POOL_SIZE = 8
 
-    # Horizontal spacing: quarter note = 1 beat = BEAT_WIDTH pixels
-    BEAT_WIDTH = 30
-    DURATION_BEATS = {
-        Duration.WHOLE:   4,
-        Duration.HALF:    2,
-        Duration.QUARTER: 1,
-        Duration.EIGHTH:  1,  # give eighth same column width as quarter for readability
+    # Horizontal layout weights (column pixel widths) per duration. Sub-linear
+    # in musical beats so a sparse measure (e.g. one whole note) doesn't gobble
+    # the entire staff — the remaining width previews upcoming items from the
+    # next measure(s). Eighth shares quarter width for readability; otherwise
+    # weights grow but at a discount versus their musical-beat count.
+    # Tune in concert with test/staff_layout_test.py.
+    LAYOUT_WEIGHT = {
+        Duration.EIGHTH:  32,
+        Duration.QUARTER: 32,
+        Duration.HALF:    44,
+        Duration.WHOLE:   60,
     }
+    BEATS_PER_MEASURE = 4
 
     def __init__(self, width: int, config: Config, key_signature: KeySignature = KeySignatures.C_MAJOR, time_signature: None = None, enable_progress: bool = False) -> None:
         super().__init__()
@@ -240,7 +249,7 @@ class Staff(displayio.Group):
                 accidental_grid.y = target_y - pin_y
 
                 self.static_group.append(accidental_grid)
-                current_x += self.ACC_SPRITE_WIDTH
+                current_x += self.ACC_KEY_STRIDE
 
         except Exception as e:
             print(f"Warning: Could not load accidental sprite sheet: {e}")
@@ -426,15 +435,51 @@ class Staff(displayio.Group):
             return Accidental.NATURAL
         return note.accidental
 
-    def update_sequence(self, items) -> None:
-        """
-        Renders a list of TimedNote / Rest objects onto the dynamic layer of the staff.
-        Items are centered within their beat-proportional horizontal slots so that,
-        for example, a whole note sits in the middle of the measure rather than the
-        far-left edge.  Assumes 4/4 time (4 beats per measure).
+    def _layout(self, items):
+        """Greedy left-to-right packing of items into the staff's note area.
 
-        Measure lines are no longer drawn here — call `set_measure_lines`
-        separately, on whichever staff should own them.
+        Returns (center_xs, right_edges, cum_beats) as parallel lists, one
+        entry per item that fit. Items whose column would overrun the staff
+        edge are dropped silently — callers can pass an oversized lookahead
+        window. Pool size is also a cap.
+
+        cum_beats holds running musical-beat totals at each item's right edge,
+        used by set_measure_lines to place barlines at musical boundaries
+        (not visual ones) regardless of how widths were compressed.
+        """
+        num_ks_acc = len(self.key_signature.accidentals) if self.key_signature else 0
+        content_x = 32 + (num_ks_acc * self.ACC_KEY_STRIDE) + 8
+        right_edge_limit = self.width - 4
+
+        center_xs = []
+        right_edges = []
+        cum_beats = []
+
+        cursor_x = content_x
+        cursor_beats = 0.0
+        for item in items:
+            if len(center_xs) >= self.NOTE_POOL_SIZE:
+                break
+            weight = self.LAYOUT_WEIGHT.get(item.duration, self.LAYOUT_WEIGHT[Duration.QUARTER])
+            slot_right = cursor_x + weight
+            if slot_right > right_edge_limit:
+                break
+            center_xs.append(int(cursor_x + weight / 2.0))
+            right_edges.append(int(slot_right))
+            cursor_beats += Duration.BEATS.get(item.duration, 1.0)
+            cum_beats.append(cursor_beats)
+            cursor_x = slot_right
+
+        return center_xs, right_edges, cum_beats
+
+    def update_sequence(self, items) -> None:
+        """Renders a list of TimedNote / Rest objects onto the dynamic layer
+        of the staff. Items are sized by LAYOUT_WEIGHT (sub-linear in musical
+        beats) and packed left-to-right; items beyond the staff edge are
+        dropped silently.
+
+        Measure lines are not drawn here — call `set_measure_lines` separately,
+        on whichever staff should own them.
         """
         for tg in self._note_pool:
             tg.x = -1000
@@ -453,77 +498,44 @@ class Staff(displayio.Group):
         self._acc_pool_next = 0
         self._ledger_pool_next = 0
 
-        num_ks_acc = len(self.key_signature.accidentals) if self.key_signature else 0
-        content_x = 32 + (num_ks_acc * self.ACC_SPRITE_WIDTH) + 8
-        available_w = self.width - content_x - 4
-        beats_per_measure = 4
-        beat_w = available_w / beats_per_measure
-
-        current_beat = 0
-
-        for item in items:
-            duration = item.duration
-            beats = self.DURATION_BEATS.get(duration, 1)
-            # The staff is sized for one measure of horizontal real estate;
-            # anything beyond that would render under the fingering chart.
-            # Truncate silently — callers can pass lookahead-sized windows
-            # without worrying about overflow.
-            if current_beat + beats > beats_per_measure:
-                break
-            slot_cx = int(content_x + (current_beat + beats / 2.0) * beat_w)
-
+        center_xs, _, _ = self._layout(items)
+        for item, slot_cx in zip(items, center_xs):
             if isinstance(item, Rest):
                 self._draw_rest(item, slot_cx)
             else:
                 self._draw_timed_note(item, slot_cx)
 
-            current_beat += beats
-
     def set_measure_lines(self, items, start_beat: float = 0) -> None:
-        """Places measure lines for the given item sequence's layout without
-        touching the note pool. Call this separately from update_sequence so
-        the lines can live on a different staff than the notes (overlay
-        pattern: notes on drill_staff, measure lines on the base staff so
-        they inherit its un-overridden fg_color)."""
+        """Places measure lines at musical-beat boundaries that fall on item
+        edges within the laid-out window. Uses the same layout as
+        update_sequence so lines and notes always agree.
+
+        Lives in static_group so the lines render behind notes and share the
+        owning staff's fg_color (the overlay pattern in scale_drill_state
+        draws notes on a recolored staff and lines on the base staff)."""
         for tg in self._measure_line_pool:
             tg.x = -1000
         self._measure_line_pool_next = 0
 
-        num_ks_acc = len(self.key_signature.accidentals) if self.key_signature else 0
-        content_x = 32 + (num_ks_acc * self.ACC_SPRITE_WIDTH) + 8
-        available_w = self.width - content_x - 4
-        beats_per_measure = 4
-        beat_w = available_w / beats_per_measure
+        _, right_edges, cum_beats = self._layout(items)
+        if not right_edges:
+            return
 
-        # Mirror update_sequence's one-measure cap so measure lines never get
-        # placed past the staff edge (which would land them under the
-        # fingering chart).
-        total_layout_beats = 0
-        for item in items:
-            beats = self.DURATION_BEATS.get(item.duration, 1)
-            if total_layout_beats + beats > beats_per_measure:
+        pool_n = 0
+        # Skip the very last edge — it sits at the staff's right margin and
+        # would visually merge with the fingering chart.
+        for i in range(len(right_edges) - 1):
+            if pool_n >= len(self._measure_line_pool):
                 break
-            total_layout_beats += beats
-
-        self._draw_measure_lines(start_beat, total_layout_beats, content_x, beat_w, beats_per_measure)
-
-    def _draw_measure_lines(self, start_beat, total_layout_beats, content_x, beat_w, beats_per_measure):
-        """Places measure-line TileGrids at every 4-beat boundary that falls
-        strictly inside the layout's beat range (not at the leftmost edge)."""
-        # First multiple of beats_per_measure at or after start_beat:
-        n = int((start_beat + beats_per_measure - 1) // beats_per_measure)
-        while True:
-            boundary_global = n * beats_per_measure
-            boundary_layout = boundary_global - start_beat
-            if boundary_layout > total_layout_beats:
-                break
-            if boundary_layout > 0:  # don't draw at the leftmost edge
-                if self._measure_line_pool_next < len(self._measure_line_pool):
-                    line_tg = self._measure_line_pool[self._measure_line_pool_next]
-                    line_tg.x = int(content_x + boundary_layout * beat_w)
-                    line_tg.y = self.staff_y_start
-                    self._measure_line_pool_next += 1
-            n += 1
+            global_beat = start_beat + cum_beats[i]
+            ratio = global_beat / self.BEATS_PER_MEASURE
+            # Tolerate float rounding from eighth-note sums.
+            if ratio > 0 and abs(ratio - round(ratio)) < 1e-6:
+                line_tg = self._measure_line_pool[pool_n]
+                line_tg.x = right_edges[i]
+                line_tg.y = self.staff_y_start
+                pool_n += 1
+        self._measure_line_pool_next = pool_n
 
     def _draw_timed_note(self, timed_note: TimedNote, slot_cx: int) -> None:
         note = timed_note.note

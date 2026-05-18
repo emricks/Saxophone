@@ -27,13 +27,16 @@ def parse_drill_item(name):
     """
     Parses a drill-payload string into a TimedNote or Rest.
 
-    "REST_QUARTER" / "REST_HALF" / "REST_WHOLE" / "REST_EIGHTH" -> Rest
+    "REST"          -> quarter rest (bare REST defaults to quarter, like notes do)
+    "REST:HALF"     -> half rest (also accepts REST:WHOLE / REST:QUARTER / REST:EIGHTH)
     "C_4"           -> TimedNote at quarter (default)
     "C_4:HALF"      -> TimedNote at the named duration (WHOLE/HALF/QUARTER/EIGHTH)
     Returns None for unknown names or unknown durations.
     """
-    if name.startswith("REST_"):
-        rest_duration = _DURATION_BY_NAME.get(name[len("REST_"):])
+    if name == "REST":
+        return Rest(Duration.QUARTER)
+    if name.startswith("REST:"):
+        rest_duration = _DURATION_BY_NAME.get(name[len("REST:"):])
         return Rest(rest_duration) if rest_duration is not None else None
 
     note_name = name
@@ -312,9 +315,13 @@ class ScaleDrillState(PlayState):
                 self.hw.display.refresh()
                 last_drawn_index = drill_index
 
-            # show playing note
+            # show playing note — match the current drill item's duration so
+            # the played note silhouette aligns with (and lines up under) the
+            # drill note's column. Rests have no playable note; fall back to
+            # quarter for the played sprite in that case.
             target_note = self.hw.get_current_note()
-            await self.process_playing_note(target_note)
+            play_duration = current_item.duration if isinstance(current_item, TimedNote) else Duration.QUARTER
+            await self.process_playing_note(target_note, play_duration)
 
             breathing = self.hw.breath_sensor.breath_sensor_triggered
             current_time = time.monotonic()
@@ -322,13 +329,6 @@ class ScaleDrillState(PlayState):
             satisfied_now = self._item_satisfied(current_item, target_note, breathing)
 
             if ScaleDrillState.SESSION_MODE == self.MODE_TIMED:
-                # Timed mode: fill is anchored to the beat grid. Advance fires
-                # on the full musical_duration regardless of whether they
-                # played, but fill reaches 100% at required_hold (hold_factor
-                # of the beat) so the last sliver is free breathing room.
-                elapsed_in_item = current_time - self.current_item_start_time
-                self.staff.set_progress(elapsed_in_item / required_hold)
-
                 # Track cumulative satisfied time as opening/closing streaks.
                 if satisfied_now:
                     if self._timed_satisfied_since is None:
@@ -337,6 +337,16 @@ class ScaleDrillState(PlayState):
                     if self._timed_satisfied_since is not None:
                         self._timed_satisfied_seconds += current_time - self._timed_satisfied_since
                         self._timed_satisfied_since = None
+
+                # Fill represents satisfied seconds (not wall-clock) so wrong
+                # notes never appear to make progress. The beat boundary still
+                # advances on musical_duration regardless of satisfaction.
+                satisfied_so_far = self._timed_satisfied_seconds
+                if self._timed_satisfied_since is not None:
+                    satisfied_so_far += current_time - self._timed_satisfied_since
+                self.staff.set_progress(satisfied_so_far / required_hold)
+
+                elapsed_in_item = current_time - self.current_item_start_time
 
                 if elapsed_in_item >= musical_duration:
                     # Close any in-progress streak at the item boundary so it
@@ -417,11 +427,14 @@ class ScaleDrillState(PlayState):
                     self.note_played_time = None
                     print(f"Moving to next item. Total score so far: {self.total_score}")
 
-            # 3. HINT: If they are taking too long on a note, start cycling the fingerings.
-            #    Rests have no fingering to hint at, so skip them.
+            # 3. HINT: Show fingering. Timed mode shows it immediately on each
+            #    item — the player is racing the beat and shouldn't have to
+            #    earn the hint. Easy mode keeps the "taking too long" timeout
+            #    so it stays a soft assist. Rests have no fingering to hint.
             if (self.hint_task is None and self.note_start_time is not None
                     and isinstance(current_item, TimedNote)):
-                if time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2:
+                if (ScaleDrillState.SESSION_MODE == self.MODE_TIMED
+                        or time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2):
                     self.hint_task = asyncio.create_task(self.cycle_fingerings(current_item.note))
 
             # No beat-related polling here — beat-driven side effects (visual

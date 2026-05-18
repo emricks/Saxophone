@@ -19,6 +19,7 @@ class PlayState:
         self.hw = hardware
         self.is_running = True
         self.current_note_playing = None
+        self.current_duration_playing = None
 
         self.ui_group = displayio.Group()
         self.hw.mixer.voice[0].level = config.volume_data.volume
@@ -116,27 +117,31 @@ class PlayState:
 
         await self.hw.stop_note()
 
-    async def process_playing_note(self, note):
+    async def process_playing_note(self, note, duration=Duration.QUARTER):
         breathing = self.hw.breath_sensor.breath_sensor_triggered
         if note is None or not breathing:
             if self.current_note_playing is not None:
                 await self.hw.stop_note()
                 await self.hide_notes()
                 self.current_note_playing = None
+                self.current_duration_playing = None
                 self.hw.display.refresh()
             return
 
-        if note != self.current_note_playing:
+        note_changed = note != self.current_note_playing
+        duration_changed = duration != self.current_duration_playing
+
+        if note_changed:
             await self.hw.stop_note()
             await self.hide_notes()
+            self.hw.play_note(note.midi_number)
 
-            if note is not None:
-                self.hw.play_note(note.midi_number)
-                composer_note = note_for_key(note.midi_number, self.staff.key_signature)
-                if composer_note is not None:
-                    self.staff.show_note(composer_note, Duration.QUARTER)
-
+        if note_changed or duration_changed:
+            composer_note = note_for_key(note.midi_number, self.staff.key_signature)
+            if composer_note is not None:
+                self.staff.show_note(composer_note, duration)
             self.current_note_playing = note
+            self.current_duration_playing = duration
             self.hw.display.refresh()
 
     async def clear_specific_fingering(self, fingering):

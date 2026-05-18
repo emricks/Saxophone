@@ -128,7 +128,7 @@ class DrillConfig:
     BPM_MIN = 40
     BPM_MAX = 160
 
-    def __init__(self, default_bpm=48, default_mode=MODE_TIMED, hold_factor=0.75):
+    def __init__(self, default_bpm=56, default_mode=MODE_TIMED, hold_factor=0.75):
         self.default_bpm = default_bpm
         self.default_mode = default_mode
         # Fraction of musical duration that counts as fully satisfied — the

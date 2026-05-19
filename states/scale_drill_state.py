@@ -431,11 +431,18 @@ class ScaleDrillState(PlayState):
             #    item — the player is racing the beat and shouldn't have to
             #    earn the hint. Easy mode keeps the "taking too long" timeout
             #    so it stays a soft assist. Rests have no fingering to hint.
-            if (self.hint_task is None and self.note_start_time is not None
-                    and isinstance(current_item, TimedNote)):
-                if (ScaleDrillState.SESSION_MODE == self.MODE_TIMED
-                        or time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2):
-                    self.hint_task = asyncio.create_task(self.cycle_fingerings(current_item.note))
+            #    Re-read from self.notes — the advance blocks above may have
+            #    just bumped drill_index, leaving the loop-top current_item
+            #    stale. (Easy mode's MAX-2 gate masks this; timed mode would
+            #    otherwise kick off a hint for the previous note here.)
+            if drill_index < len(self.notes):
+                hint_item = self.notes[drill_index]
+                if (self.hint_task is None
+                        and self.note_start_time is not None
+                        and isinstance(hint_item, TimedNote)
+                        and (ScaleDrillState.SESSION_MODE == self.MODE_TIMED
+                             or time.monotonic() - self.note_start_time > self.MAX_POSSIBLE_PER_NOTE - 2)):
+                    self.hint_task = asyncio.create_task(self.cycle_fingerings(hint_item.note))
 
             # No beat-related polling here — beat-driven side effects (visual
             # pulse, and eventually drill advancement) all flow through the

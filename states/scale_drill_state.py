@@ -157,6 +157,11 @@ class ScaleDrillState(PlayState):
         self.current_item_start_time = None
         self._timed_satisfied_seconds = 0.0
         self._timed_satisfied_since = None
+        # Number of pre-roll rests inserted before the user's drill. These
+        # items still tick by the metronome but don't contribute to scoring;
+        # see the timed-advance block where score awarding is gated on
+        # drill_index >= self.lead_in_count.
+        self.lead_in_count = 0
 
         item_names = payload.get("notes", [])
         self.notes = [parse_drill_item(name) for name in item_names]
@@ -273,6 +278,7 @@ class ScaleDrillState(PlayState):
         if ScaleDrillState.SESSION_MODE == self.MODE_TIMED:
             lead_in = [Rest(Duration.QUARTER) for _ in range(self.LEAD_IN_BEATS)]
             self.notes = lead_in + self.notes
+            self.lead_in_count = self.LEAD_IN_BEATS
             self.SCORE_MULTIPLY_CONSTANT = (
                 self.MAX_POSSIBLE_SCORE / (len(self.notes) * self.MAX_POSSIBLE_PER_NOTE) * 1.004
             )
@@ -360,12 +366,16 @@ class ScaleDrillState(PlayState):
                     # Score caps at required_hold, not musical_duration — playing
                     # the required_hold window earns a full slice; the remaining
                     # ~20% of the beat is breathing room and doesn't penalize.
-                    satisfied_fraction = min(1.0, self._timed_satisfied_seconds / required_hold)
-                    slice_max = int(self.MAX_POSSIBLE_SCORE / len(self.notes))
-                    slice_score = int(slice_max * satisfied_fraction)
-                    if slice_score > 0:
-                        self.total_score += slice_score
-                        self.score_label.text = str(self.total_score)
+                    # Lead-in rests are part of the count-in, not the drill, so
+                    # they're excluded from both the slice size and the award.
+                    if drill_index >= self.lead_in_count:
+                        scored_count = len(self.notes) - self.lead_in_count
+                        satisfied_fraction = min(1.0, self._timed_satisfied_seconds / required_hold)
+                        slice_max = int(self.MAX_POSSIBLE_SCORE / scored_count)
+                        slice_score = int(slice_max * satisfied_fraction)
+                        if slice_score > 0:
+                            self.total_score += slice_score
+                            self.score_label.text = str(self.total_score)
 
                     if self.hint_task is not None:
                         self.hint_task.cancel()

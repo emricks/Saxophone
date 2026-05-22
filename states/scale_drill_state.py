@@ -67,13 +67,10 @@ class ScaleDrillState(PlayState):
     # The ready-phase R_1 toggle and the Drill settings screen both write here.
     SESSION_MODE = MODE_TIMED
 
-    # Musical beat counts (eighth=0.5, unlike Staff.DURATION_BEATS which is column-width).
-    _HOLD_BEATS = {
-        Duration.WHOLE:   4.0,
-        Duration.HALF:    2.0,
-        Duration.QUARTER: 1.0,
-        Duration.EIGHTH:  0.5,
-    }
+    # How many drill items to send to the staff per redraw. The staff
+    # width-truncates internally; this just needs to be generous enough that
+    # sparse measures (whole notes) leave room for previews of upcoming items.
+    DRAW_LOOKAHEAD = 8
 
     def __init__(self, hardware, payload, config):
         self.drill_name = payload.get("name", "Unknown Drill")
@@ -193,7 +190,7 @@ class ScaleDrillState(PlayState):
     def musical_duration_for(self, item):
         """Seconds the item occupies musically — the fill grows to 100% over
         this duration, matching the metronome's beat timeline."""
-        return (60.0 / self.bpm) * self._HOLD_BEATS[item.duration]
+        return (60.0 / self.bpm) * Duration.BEATS[item.duration]
 
     def required_hold_for(self, item):
         """Seconds the player must hold (or rest) to advance past this item.
@@ -317,7 +314,7 @@ class ScaleDrillState(PlayState):
                 required_hold = self.required_hold_for(current_item)
 
             if drill_index != last_drawn_index:
-                self.draw_drill_note(drill_index, 3)
+                self.draw_drill_note(drill_index, self.DRAW_LOOKAHEAD)
                 self.hw.display.refresh()
                 last_drawn_index = drill_index
 
@@ -615,13 +612,11 @@ class ScaleDrillState(PlayState):
 
     def draw_drill_note(self, first_index, count):
         items_to_show = self.notes[first_index:min(first_index + count, len(self.notes))]
-        # Accumulate the layout-beat position of the first visible item so the
-        # staff can draw measure lines at the right places as the window scrolls.
-        # Uses Staff.DURATION_BEATS (the column-width measure) for consistency
-        # with how the layout itself positions items.
-        start_beat = 0
+        # Musical-beat position of the first visible item; Staff uses it to
+        # place measure lines correctly as the window scrolls past barlines.
+        start_beat = 0.0
         for i in range(first_index):
-            start_beat += Staff.DURATION_BEATS.get(self.notes[i].duration, 1)
+            start_beat += Duration.BEATS.get(self.notes[i].duration, 1.0)
         self.drill_staff.update_sequence(items_to_show)
         # Measure lines render on the base staff (not drill_staff) so they
         # share the staff-line color source. drill_staff's fg_color is

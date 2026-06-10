@@ -153,10 +153,21 @@ class DrillConfig:
 class BreathConfig:
     """Per-install breath sensor calibration. `threshold` is the hPa pressure
     drop that counts as a breath; it varies between physical builds (tubing,
-    sensor, reed gap) so it's persisted to disk rather than hard-coded."""
+    sensor, reed gap) so it's persisted to disk rather than hard-coded.
+    Adjustable from the Breath settings screen."""
+
+    THRESHOLD_STEP = 0.1
+    THRESHOLD_MIN = 0.4
+    THRESHOLD_MAX = 2.0
 
     def __init__(self, threshold=1.0):
         self.threshold = threshold
+
+    def step_up(self):
+        self.threshold = min(round(self.threshold + self.THRESHOLD_STEP, 2), self.THRESHOLD_MAX)
+
+    def step_down(self):
+        self.threshold = max(round(self.threshold - self.THRESHOLD_STEP, 2), self.THRESHOLD_MIN)
 
 
 class ButtonPin:

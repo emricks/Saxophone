@@ -81,6 +81,9 @@ class MenuState:
                 elif item_type == "drill_settings":
                     from states.drill_settings_state import DrillSettingsState
                     await self._transition_to_state(DrillSettingsState)
+                elif item_type == "breath_settings":
+                    from states.breath_settings_state import BreathSettingsState
+                    await self._transition_to_state(BreathSettingsState)
                 elif item_type == "song":
                     payload = selected_item.get("payload", {})
                     from states.song_state import SongState

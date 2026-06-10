@@ -386,5 +386,6 @@ MAIN_MENU = menu("MAIN MENU", back=False, items=[
         ]),
         {"text": "Volume", "type": "volume_settings"},
         {"text": "Drill", "type": "drill_settings"},
+        {"text": "Breath", "type": "breath_settings"},
     ]),
 ])

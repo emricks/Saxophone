@@ -39,6 +39,19 @@ def color(text, bg_color, fg_color, chart_color, fingering_color, drill_note_col
     }
 
 
+FUNKY_SYNTH = ["C_5:EIGHTH", "C_5:EIGHTH", "B_FLAT_4:EIGHTH", "C_5:EIGHTH", "REST:EIGHTH",
+               "G_4:EIGHTH", "REST:EIGHTH", "G_4:EIGHTH", "C_5:EIGHTH", "F_5:EIGHTH",
+               "E_5:EIGHTH", "C_5:EIGHTH", "REST:HALF"]
+FUNKY_MELODY = ["C_4:EIGHTH", "C_4:EIGHTH", "C_4:EIGHTH", "C_4:EIGHTH", "E_4",
+                "E_4:EIGHTH", "E_4:EIGHTH", "G_4:EIGHTH", "G_4", "E_5", "D_5:EIGHTH", "C_5"]
+FUNKY_TALK = ["D_5:EIGHTH", "D_5:EIGHTH", "D_5:EIGHTH", "D_5:EIGHTH",
+              "C_5:EIGHTH", "C_5:EIGHTH", "C_5:EIGHTH", "C_5:EIGHTH",
+              "B_4:EIGHTH", "B_4:EIGHTH", "B_4:EIGHTH", "B_4:EIGHTH",
+              "A_4:EIGHTH", "A_4:EIGHTH", "A_4:EIGHTH", "G_4:EIGHTH"]
+FUNKY_SYNTH_5 = ["G_4:EIGHTH", "G_4:EIGHTH", "F_4:EIGHTH", "G_4:EIGHTH", "REST:EIGHTH",
+                 "D_4:EIGHTH", "REST:EIGHTH", "D_4:EIGHTH", "G_4:EIGHTH", "C_5:EIGHTH",
+                 "B_4:EIGHTH", "G_4:EIGHTH", "REST:HALF"]
+
 MAIN_MENU = menu("MAIN MENU", back=False, items=[
     menu("DRILLS", [
         menu("Scales", [
@@ -127,6 +140,10 @@ MAIN_MENU = menu("MAIN MENU", back=False, items=[
                    "C_4", "C_4", "C_5", "A_4", "F_4", "E_4", "D_4:HALF",
                    "B_FLAT_4", "B_FLAT_4", "A_4", "F_4", "G_4", "F_4:HALF", "REST"],
                   mode="none"),
+            drill("Funky Town", "C_MAJOR",
+                  FUNKY_SYNTH * 2 + FUNKY_MELODY + FUNKY_SYNTH + FUNKY_MELODY + FUNKY_SYNTH
+                  + FUNKY_TALK + FUNKY_SYNTH_5 + FUNKY_TALK + FUNKY_SYNTH * 2,
+                  mode="none", bpm=80),
             menu("Spider Dance", [
                 drill("Intro", "G_MAJOR",
                       ["D_5", "A_4", "F_SHARP_4", "D_4", "G_SHARP_4",

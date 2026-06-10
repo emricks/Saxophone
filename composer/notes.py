@@ -326,6 +326,24 @@ class Notes:
         """Returns the Note instance corresponding to the given name string."""
         return getattr(Notes, name, None)
 
+def display_parts(name):
+    """Splits a Note.name into (letter, accidental, octave) for display.
+
+    "C_4"       -> ("C", None,             "4")
+    "B_FLAT_3"  -> ("B", Accidental.FLAT,  "3")
+    "F_SHARP_4" -> ("F", Accidental.SHARP, "4")
+
+    notes.py owns the name format, so it owns the split.
+    """
+    parts = name.split("_")
+    accidental = None
+    if "FLAT" in parts:
+        accidental = Accidental.FLAT
+    elif "SHARP" in parts:
+        accidental = Accidental.SHARP
+    return parts[0], accidental, parts[-1]
+
+
 def note_from_mask(mask):
     return Notes.MASK_TO_NOTE.get(mask, None)
 

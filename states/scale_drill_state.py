@@ -9,6 +9,7 @@ from adafruit_display_text import label
 
 from composer.key_signature import KeySignatures
 from composer.notes import Duration, Notes as ComposerNotes, Rest, TimedNote
+from composer.note_label import NoteNameLabel
 from composer.staff import Staff
 from data.config import Config, DrillConfig
 from hardware.buttons import Buttons
@@ -116,6 +117,16 @@ class ScaleDrillState(PlayState):
         self.mode_label.anchor_point = (0.0, 0.0)
         self.mode_label.anchored_position = (10, 28)
         self.ui_group.append(self.mode_label)
+
+        # Target-note name in the empty band below the staff lines (the staff
+        # group spans the full height but never draws notes this low). Updated
+        # from draw_drill_note as the drill advances.
+        self.note_name_label = NoteNameLabel(
+            color=config.color_data.drill_note_color,
+            center_x=PlayState.STAFF_WIDTH // 2,
+            top_y=178,
+        )
+        self.ui_group.append(self.note_name_label)
 
         # Ready-phase prompts (two lines below the staff). Removed once the
         # drill starts. fingering_color makes them visually distinct from the
@@ -622,3 +633,7 @@ class ScaleDrillState(PlayState):
         # share the staff-line color source. drill_staff's fg_color is
         # overridden to drill_note_color; the base staff is unmodified.
         self.staff.set_measure_lines(items_to_show, start_beat=start_beat)
+        # Name the current target (first visible item). Rests have no .note,
+        # so the label clears itself during rests and the lead-in.
+        target = items_to_show[0] if items_to_show else None
+        self.note_name_label.set_note_name(getattr(getattr(target, "note", None), "name", None))

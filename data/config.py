@@ -51,6 +51,7 @@ class Config:
         self.color_data = ColorConfig()
         self.volume_data = VolumeConfig()
         self.drill_data = DrillConfig()
+        self.breath_data = BreathConfig()
         self.button_data = ButtonConfig()
 
     @classmethod
@@ -147,6 +148,15 @@ class DrillConfig:
             DrillConfig.MODE_EASY if self.default_mode == DrillConfig.MODE_TIMED
             else DrillConfig.MODE_TIMED
         )
+
+
+class BreathConfig:
+    """Per-install breath sensor calibration. `threshold` is the hPa pressure
+    drop that counts as a breath; it varies between physical builds (tubing,
+    sensor, reed gap) so it's persisted to disk rather than hard-coded."""
+
+    def __init__(self, threshold=1.0):
+        self.threshold = threshold
 
 
 class ButtonPin:

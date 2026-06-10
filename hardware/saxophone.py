@@ -72,7 +72,7 @@ class SaxHardware:
 
         # 6. The Breath (Envelope)
         self.sax_envelope = synthio.Envelope(
-            attack_time=0.05,  # 50ms fade-in
+            attack_time=0.03,  # 50ms fade-in
             decay_time=0.0,
             release_time=SaxHardware.NOTE_RELEASE_TIME,
             attack_level=1.0,
@@ -111,7 +111,7 @@ class SaxHardware:
         print("Initialized onboard GPIO")
 
         # 8. Initialize the breath sensor
-        self.breath_sensor = BreathSensor(self.i2c)
+        self.breath_sensor = BreathSensor(self.i2c, config.breath_data.threshold)
 
     async def start_hardware(self):
         await self.breath_sensor.start()

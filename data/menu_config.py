@@ -143,7 +143,7 @@ MAIN_MENU = menu("MAIN MENU", back=False, items=[
             drill("Funky Town", "C_MAJOR",
                   FUNKY_SYNTH * 2 + FUNKY_MELODY + FUNKY_SYNTH + FUNKY_MELODY + FUNKY_SYNTH
                   + FUNKY_TALK + FUNKY_SYNTH_5 + FUNKY_TALK + FUNKY_SYNTH * 2,
-                  mode="none", bpm=80),
+                  mode="none", bpm=60),
             menu("Spider Dance", [
                 drill("Intro", "G_MAJOR",
                       ["D_5", "A_4", "F_SHARP_4", "D_4", "G_SHARP_4",

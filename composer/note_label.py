@@ -21,8 +21,8 @@ class NoteNameLabel(displayio.Group):
     to `top_y`. Call set_note_name(name) to update it (pass None or "" to
     clear, e.g. on a rest)."""
 
-    LETTER_SCALE = 2
-    OCTAVE_SCALE = 1
+    LETTER_SCALE = 3
+    OCTAVE_SCALE = 2
 
     def __init__(self, color, center_x, top_y):
         super().__init__()

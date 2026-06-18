@@ -97,6 +97,27 @@ def bucketize_beats(beats):
     return out, remaining
 
 
+def straighten_swing_events(events, ticks_per_beat):
+    """Snap triplet-feel (2:1 swing) timing onto a straight-eighth grid.
+
+    Emulated swing encodes each beat as a triplet-quarter + triplet-eighth
+    (0.667 + 0.333 beats). The bucketizer only knows binary durations, so a
+    0.333-beat note rounds to nothing and gets dropped. We collapse the three
+    triplet-eighth subdivisions of every beat [0, 1, 2] onto two straight-eighth
+    subdivisions [0, 0, 1], which turns a swing pair into two equal eighths and
+    leaves on-beat notes untouched. Standard jazz convention: notate straight,
+    play swung. Returns a new event list with start/end snapped."""
+    trip = ticks_per_beat / 3.0      # one triplet-eighth
+    eighth = ticks_per_beat / 2.0    # one straight eighth
+
+    def snap(tick):
+        t = int(round(tick / trip))          # index in triplet-eighths
+        straight = (t // 3) * 2 + (1 if t % 3 == 2 else 0)
+        return int(round(straight * eighth))
+
+    return [(snap(start), snap(end), note) for start, end, note in events]
+
+
 def find_tempo_and_meta(mid):
     """Returns (bpm, time_sig, key_sig) by scanning track 0 (conductor)."""
     bpm = None
@@ -171,12 +192,14 @@ def _resolve_tick_range(mid, measures_arg, from_tick, until_tick, measure_anchor
 
 
 def extract_notes(mid, track_index, transpose, prefer_flats=False,
-                  from_tick=None, until_tick=None):
+                  from_tick=None, until_tick=None, straighten=False):
     """Returns (notes_list, dropped_list). notes_list is in drill payload
     format; dropped_list contains human-readable reasons for skipped events."""
     track = mid.tracks[track_index]
     ticks_per_beat = mid.ticks_per_beat
     events = collect_note_events(track)
+    if straighten:
+        events = straighten_swing_events(events, ticks_per_beat)
     if from_tick is not None:
         events = [e for e in events if e[0] >= from_tick]
     if until_tick is not None:
@@ -290,6 +313,7 @@ def cmd_notes(args):
         prefer_flats=args.flats,
         from_tick=from_tick,
         until_tick=until_tick,
+        straighten=args.swing,
     )
     if dropped:
         print(f"# dropped {len(dropped)} event(s):", file=sys.stderr)
@@ -314,6 +338,7 @@ def cmd_drill(args):
         prefer_flats=args.flats,
         from_tick=from_tick,
         until_tick=until_tick,
+        straighten=args.swing,
     )
     if dropped:
         print(f"# dropped {len(dropped)} event(s):", file=sys.stderr)
@@ -346,6 +371,8 @@ def main():
                           help=f"override semitone shift (default: +{ALTO_TRANSPOSE_SEMITONES} for alto sax)")
     p_notes.add_argument("--flats", action="store_true",
                           help="prefer flat spellings over sharp spellings")
+    p_notes.add_argument("--swing", action="store_true",
+                          help="straighten triplet-feel (2:1) swing onto a straight-eighth grid")
     p_notes.add_argument("--from-tick", type=int, default=None,
                           help="skip events whose start tick is before this")
     p_notes.add_argument("--until-tick", type=int, default=None,
@@ -364,6 +391,8 @@ def main():
     p_drill.add_argument("--transpose", type=int, default=None,
                           help=f"override semitone shift (default: +{ALTO_TRANSPOSE_SEMITONES} for alto sax)")
     p_drill.add_argument("--flats", action="store_true")
+    p_drill.add_argument("--swing", action="store_true",
+                          help="straighten triplet-feel (2:1) swing onto a straight-eighth grid")
     p_drill.add_argument("--from-tick", type=int, default=None,
                           help="skip events whose start tick is before this")
     p_drill.add_argument("--until-tick", type=int, default=None,

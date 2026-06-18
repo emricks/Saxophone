@@ -4,6 +4,7 @@ import displayio
 import adafruit_imageload
 
 from composer.key_signature import KeySignature, KeySignatures
+from composer.note_label import NoteNameLabel
 from composer.notes import Accidental, Duration, Note, Rest, TimedNote
 from data.config import Config
 
@@ -96,6 +97,10 @@ class Staff(displayio.Group):
     LEDGER_LINE_WIDTH = 26  # pixels wide for extra ledger lines
     NOTE_POOL_SIZE = 8
 
+    # Top Y (group-relative) of the note-name label, in the empty band below
+    # the staff lines (bottom line sits at staff_y_start + 4*LEDGER_SPACING = 128).
+    NAME_TOP_Y = 162
+
     # Horizontal layout weights (column pixel widths) per duration. Sub-linear
     # in musical beats so a sparse measure (e.g. one whole note) doesn't gobble
     # the entire staff — the remaining width previews upcoming items from the
@@ -159,6 +164,17 @@ class Staff(displayio.Group):
         self._init_dynamic_pool()
         if self.enable_progress:
             self._init_progress_overlay()
+
+        # Name of the current note, centered in the band below the staff. Lives
+        # directly on the staff group (not static_/dynamic_group) so it survives
+        # the static_group teardown that overlay staves do, and moves with the
+        # staff. Updated by update_sequence to name the first (target) item.
+        self.note_name_label = NoteNameLabel(
+            color=self.config.color_data.fg_color,
+            center_x=self.width // 2,
+            top_y=self.NAME_TOP_Y,
+        )
+        self.append(self.note_name_label)
 
     def _draw_static_lines(self) -> None:
         line_bitmap = displayio.Bitmap(self.width, 1, 1)
@@ -504,6 +520,11 @@ class Staff(displayio.Group):
                 self._draw_rest(item, slot_cx)
             else:
                 self._draw_timed_note(item, slot_cx)
+
+        # Name the first (target) item. Rests have no .note, so the label
+        # clears itself during rests and when the sequence is empty.
+        target = items[0] if items else None
+        self.note_name_label.set_note_name(getattr(getattr(target, "note", None), "name", None))
 
     def set_measure_lines(self, items, start_beat: float = 0) -> None:
         """Places measure lines at musical-beat boundaries that fall on item

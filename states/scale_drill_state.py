@@ -9,7 +9,6 @@ from adafruit_display_text import label
 
 from composer.key_signature import KeySignatures
 from composer.notes import Duration, Notes as ComposerNotes, Rest, TimedNote
-from composer.note_label import NoteNameLabel
 from composer.staff import Staff
 from data.config import Config, DrillConfig
 from hardware.buttons import Buttons
@@ -118,16 +117,6 @@ class ScaleDrillState(PlayState):
         self.mode_label.anchored_position = (10, 28)
         self.ui_group.append(self.mode_label)
 
-        # Target-note name in the empty band below the staff lines (the staff
-        # group spans the full height but never draws notes this low). Updated
-        # from draw_drill_note as the drill advances.
-        self.note_name_label = NoteNameLabel(
-            color=config.color_data.drill_note_color,
-            center_x=PlayState.STAFF_WIDTH // 2,
-            top_y=178,
-        )
-        self.ui_group.append(self.note_name_label)
-
         # Ready-phase prompts (two lines below the staff). Removed once the
         # drill starts. fingering_color makes them visually distinct from the
         # default fg_color used by every other on-screen element.
@@ -177,9 +166,18 @@ class ScaleDrillState(PlayState):
 
         items_to_add = []
         if self.mode == "rand" or self.mode == "revrand":
-            # CircuitPython has no random.sample/choices — use random.choice per slot.
-            # Picks with replacement, so the same item can repeat freely.
-            items_to_add += [random.choice(self.notes) for _ in range(len(self.notes))]
+            # Random block is twice the scale length. Every note appears at
+            # least once; the remaining slots are filled by random.choice
+            # (with replacement), then the whole block is shuffled.
+            # CircuitPython has no random.sample/choices/shuffle — seed the
+            # block with one of each note, top it up with random picks, and
+            # Fisher-Yates shuffle it by hand.
+            rand_items = list(self.notes)
+            rand_items += [random.choice(self.notes) for _ in range(len(self.notes))]
+            for i in range(len(rand_items) - 1, 0, -1):
+                j = random.randrange(i + 1)
+                rand_items[i], rand_items[j] = rand_items[j], rand_items[i]
+            items_to_add += rand_items
         if self.mode == "reverse" or self.mode == "revrand":
             items_to_add += list(reversed(self.notes))
             items_to_add.pop(0)
@@ -628,12 +626,10 @@ class ScaleDrillState(PlayState):
         start_beat = 0.0
         for i in range(first_index):
             start_beat += Duration.BEATS.get(self.notes[i].duration, 1.0)
+        # drill_staff.update_sequence also drives its note-name label (names the
+        # first/target item), so the name now follows the drill notes for free.
         self.drill_staff.update_sequence(items_to_show)
         # Measure lines render on the base staff (not drill_staff) so they
         # share the staff-line color source. drill_staff's fg_color is
         # overridden to drill_note_color; the base staff is unmodified.
         self.staff.set_measure_lines(items_to_show, start_beat=start_beat)
-        # Name the current target (first visible item). Rests have no .note,
-        # so the label clears itself during rests and the lead-in.
-        target = items_to_show[0] if items_to_show else None
-        self.note_name_label.set_note_name(getattr(getattr(target, "note", None), "name", None))

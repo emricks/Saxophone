@@ -26,19 +26,24 @@ class Rest:
         self.duration = duration
 
 class Note:
-    def __init__(self, name: str, midi_number: int, fingerings: set, ledger_line: float, accidental: str | None = None) -> None:
+    def __init__(self, name: str, midi_number: int, fingerings: list, ledger_line: float, accidental: str | None = None) -> None:
         self.name = name
         self.midi_number = midi_number
+        # Source order is priority order: the first entry is the preferred
+        # (primary) fingering. Keep it a list so ordering is deterministic —
+        # cycle_fingerings shows button_fingerings[0] first.
         self.button_fingerings = fingerings
         self.ledger_line = ledger_line
         self.accidental = accidental
 
-        self.fingerings: set[int] = set()
+        # Masks in the same priority order, de-duped (first occurrence wins).
+        self.fingerings: list[int] = []
         for button_group in fingerings:
             mask = 0
             for button in button_group:
                 mask |= (1 << button.fingering_bit)
-            self.fingerings.add(mask)
+            if mask not in self.fingerings:
+                self.fingerings.append(mask)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Note):
@@ -57,238 +62,238 @@ class Notes:
     # Whichever line notes are drawn on is determined by their name,
     # e.g. D_FLAT_4, D_4, and D_SHARP_4 are all drawn on the D line.
 
-    B_FLAT_3 = Note(name="B_FLAT_3", midi_number=49, fingerings={
+    B_FLAT_3 = Note(name="B_FLAT_3", midi_number=49, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B_FLAT)
-    }, ledger_line=-1.5, accidental=Accidental.FLAT)
-    B_3 = Note(name="B_3", midi_number=50, fingerings={
+    ], ledger_line=-1.5, accidental=Accidental.FLAT)
+    B_3 = Note(name="B_3", midi_number=50, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B)
-    }, ledger_line=-1.5)
-    B_SHARP_3 = Note(name="B_SHARP_3", midi_number=51, fingerings={
+    ], ledger_line=-1.5)
+    B_SHARP_3 = Note(name="B_SHARP_3", midi_number=51, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C)
-    }, ledger_line=-1.5, accidental=Accidental.SHARP)
+    ], ledger_line=-1.5, accidental=Accidental.SHARP)
     # B# is enharmonic to C
     # Cb is enharmonic to B
-    C_FLAT_4 = Note(name="C_FLAT_4", midi_number=50, fingerings={
+    C_FLAT_4 = Note(name="C_FLAT_4", midi_number=50, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B)
-    }, ledger_line=-1.0, accidental=Accidental.FLAT)
-    C_4 = Note(name="C_4", midi_number=51, fingerings={
+    ], ledger_line=-1.0, accidental=Accidental.FLAT)
+    C_4 = Note(name="C_4", midi_number=51, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C)
-    }, ledger_line=-1.0)
-    C_SHARP_4 = Note(name="C_SHARP_4", midi_number=52, fingerings={
+    ], ledger_line=-1.0)
+    C_SHARP_4 = Note(name="C_SHARP_4", midi_number=52, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_C_SHARP)
-    }, ledger_line=-1.0, accidental=Accidental.SHARP)
+    ], ledger_line=-1.0, accidental=Accidental.SHARP)
     # C# is enharmonic to Db
     # Db is enharmonic to C#
-    D_FLAT_4 = Note(name="D_FLAT_4", midi_number=52, fingerings={
+    D_FLAT_4 = Note(name="D_FLAT_4", midi_number=52, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C,
          Buttons.L_LOW_C_SHARP)
-    }, ledger_line=-0.5, accidental=Accidental.FLAT)
-    D_4 = Note(name="D_4", midi_number=53, fingerings={
+    ], ledger_line=-0.5, accidental=Accidental.FLAT)
+    D_4 = Note(name="D_4", midi_number=53, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3)
-    }, ledger_line=-0.5)
-    D_SHARP_4 = Note(name="D_SHARP_4", midi_number=54, fingerings={
+    ], ledger_line=-0.5)
+    D_SHARP_4 = Note(name="D_SHARP_4", midi_number=54, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_E_FLAT)
-    }, ledger_line=-0.5, accidental=Accidental.SHARP)
+    ], ledger_line=-0.5, accidental=Accidental.SHARP)
     # D# is enharmonic to Eb
     # Eb is enharmonic to D#
-    E_FLAT_4 = Note(name="E_FLAT_4", midi_number=54, fingerings={
+    E_FLAT_4 = Note(name="E_FLAT_4", midi_number=54, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_E_FLAT)
-    }, ledger_line=0.0, accidental=Accidental.FLAT)
-    E_4 = Note(name="E_4", midi_number=55, fingerings={
+    ], ledger_line=0.0, accidental=Accidental.FLAT)
+    E_4 = Note(name="E_4", midi_number=55, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2)
-    }, ledger_line=0.0)
-    E_SHARP_4 = Note(name="E_SHARP_4", midi_number=56, fingerings={
+    ], ledger_line=0.0)
+    E_SHARP_4 = Note(name="E_SHARP_4", midi_number=56, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1)
-    }, ledger_line=0.0, accidental=Accidental.SHARP)
+    ], ledger_line=0.0, accidental=Accidental.SHARP)
     # E# is enharmonic to F
     # Fb is enharmonic to E
-    F_FLAT_4 = Note(name="F_FLAT_4", midi_number=55, fingerings={
+    F_FLAT_4 = Note(name="F_FLAT_4", midi_number=55, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2)
-    }, ledger_line=0.5, accidental=Accidental.FLAT)
-    F_4 = Note(name="F_4", midi_number=56, fingerings={
+    ], ledger_line=0.5, accidental=Accidental.FLAT)
+    F_4 = Note(name="F_4", midi_number=56, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1)
-    }, ledger_line=0.5)
-    F_SHARP_4 = Note(name="F_SHARP_4", midi_number=57, fingerings={
+    ], ledger_line=0.5)
+    F_SHARP_4 = Note(name="F_SHARP_4", midi_number=57, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_2),
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_F_SHARP)
-    }, ledger_line=0.5, accidental=Accidental.SHARP)
+    ], ledger_line=0.5, accidental=Accidental.SHARP)
     # F# is enharmonic to Gb
     # Gb is enharmonic to F#
-    G_FLAT_4 = Note(name="G_FLAT_4", midi_number=57, fingerings={
+    G_FLAT_4 = Note(name="G_FLAT_4", midi_number=57, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_2),
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_F_SHARP)
-    }, ledger_line=1.0, accidental=Accidental.FLAT)
-    G_4 = Note(name="G_4", midi_number=58, fingerings={
+    ], ledger_line=1.0, accidental=Accidental.FLAT)
+    G_4 = Note(name="G_4", midi_number=58, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3)
-    }, ledger_line=1.0)
-    G_SHARP_4 = Note(name="G_SHARP_4", midi_number=59, fingerings={
+    ], ledger_line=1.0)
+    G_SHARP_4 = Note(name="G_SHARP_4", midi_number=59, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.L_G_SHARP)
-    }, ledger_line=1.0, accidental=Accidental.SHARP)
+    ], ledger_line=1.0, accidental=Accidental.SHARP)
     # G# is enharmonic to Ab
     # Ab is enharmonic to G#
-    A_FLAT_4 = Note(name="A_FLAT_4", midi_number=59, fingerings={
+    A_FLAT_4 = Note(name="A_FLAT_4", midi_number=59, fingerings=[
         (Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.L_G_SHARP)
-    }, ledger_line=1.5, accidental=Accidental.FLAT)
-    A_4 = Note(name="A_4", midi_number=60, fingerings={
+    ], ledger_line=1.5, accidental=Accidental.FLAT)
+    A_4 = Note(name="A_4", midi_number=60, fingerings=[
         (Buttons.L_1, Buttons.L_2)
-    }, ledger_line=1.5)
-    A_SHARP_4 = Note(name="A_SHARP_4", midi_number=61, fingerings={
+    ], ledger_line=1.5)
+    A_SHARP_4 = Note(name="A_SHARP_4", midi_number=61, fingerings=[
         (Buttons.L_1, Buttons.R_1),
         (Buttons.L_1, Buttons.R_2),
         (Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
         (Buttons.L_1, Buttons.L_B_FLAT),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3,
          Buttons.R_LOW_C, Buttons.L_LOW_B_FLAT),
-    }, ledger_line=1.5, accidental=Accidental.SHARP)
+    ], ledger_line=1.5, accidental=Accidental.SHARP)
     # A# is enharmonic to Bb
     # Bb is enharmonic to A#
-    B_FLAT_4 = Note(name="B_FLAT_4", midi_number=61, fingerings={
+    B_FLAT_4 = Note(name="B_FLAT_4", midi_number=61, fingerings=[
         (Buttons.L_1, Buttons.R_1),
         (Buttons.L_1, Buttons.R_2),
         (Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
         (Buttons.L_1, Buttons.L_B_FLAT),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B_FLAT),
-    }, ledger_line=2.0, accidental=Accidental.FLAT)
-    B_4 = Note(name="B_4", midi_number=62, fingerings={
+    ], ledger_line=2.0, accidental=Accidental.FLAT)
+    B_4 = Note(name="B_4", midi_number=62, fingerings=[
         (Buttons.L_1,),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_B),
-    }, ledger_line=2.0)
-    B_SHARP_4 = Note(name="B_SHARP_4", midi_number=63, fingerings={
+    ], ledger_line=2.0)
+    B_SHARP_4 = Note(name="B_SHARP_4", midi_number=63, fingerings=[
         (Buttons.L_2,),
         (Buttons.L_1, Buttons.R_C),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3,
          Buttons.R_LOW_C)
-    }, ledger_line=2.0, accidental=Accidental.SHARP)
+    ], ledger_line=2.0, accidental=Accidental.SHARP)
 
-    C_FLAT_5 = Note(name="C_FLAT_5", midi_number=62, fingerings={
+    C_FLAT_5 = Note(name="C_FLAT_5", midi_number=62, fingerings=[
         (Buttons.L_1,),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3,
          Buttons.R_LOW_C, Buttons.L_LOW_B),
-    }, ledger_line=2.5, accidental=Accidental.FLAT)
-    C_5 = Note(name="C_5", midi_number=63, fingerings={
+    ], ledger_line=2.5, accidental=Accidental.FLAT)
+    C_5 = Note(name="C_5", midi_number=63, fingerings=[
         (Buttons.L_2,),
         (Buttons.L_1, Buttons.R_C),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C)
-    }, ledger_line=2.5)
-    C_SHARP_5 = Note(name="C_SHARP_5", midi_number=64, fingerings={
+    ], ledger_line=2.5)
+    C_SHARP_5 = Note(name="C_SHARP_5", midi_number=64, fingerings=[
         tuple(),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_C_SHARP),
-    }, ledger_line=2.5, accidental=Accidental.SHARP)
+    ], ledger_line=2.5, accidental=Accidental.SHARP)
 
-    D_FLAT_5 = Note(name="D_FLAT_5", midi_number=64, fingerings={
+    D_FLAT_5 = Note(name="D_FLAT_5", midi_number=64, fingerings=[
         tuple(),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_C, Buttons.L_LOW_C_SHARP),
-    }, ledger_line=3.0, accidental=Accidental.FLAT)
-    D_5 = Note(name="D_5", midi_number=65, fingerings={
+    ], ledger_line=3.0, accidental=Accidental.FLAT)
+    D_5 = Note(name="D_5", midi_number=65, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3)
-    }, ledger_line=3.0)
-    D_SHARP_5 = Note(name="D_SHARP_5", midi_number=66, fingerings={
+    ], ledger_line=3.0)
+    D_SHARP_5 = Note(name="D_SHARP_5", midi_number=66, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_E_FLAT)
-    }, ledger_line=3.0, accidental=Accidental.SHARP)
+    ], ledger_line=3.0, accidental=Accidental.SHARP)
 
-    E_FLAT_5 = Note(name="E_FLAT_5", midi_number=66, fingerings={
+    E_FLAT_5 = Note(name="E_FLAT_5", midi_number=66, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2, Buttons.R_3, Buttons.R_LOW_E_FLAT)
-    }, ledger_line=3.5, accidental=Accidental.FLAT)
-    E_5 = Note(name="E_5", midi_number=67, fingerings={
+    ], ledger_line=3.5, accidental=Accidental.FLAT)
+    E_5 = Note(name="E_5", midi_number=67, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2)
-    }, ledger_line=3.5)
-    E_SHARP_5 = Note(name="E_SHARP_5", midi_number=68, fingerings={
+    ], ledger_line=3.5)
+    E_SHARP_5 = Note(name="E_SHARP_5", midi_number=68, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1)
-    }, ledger_line=3.5, accidental=Accidental.SHARP)
+    ], ledger_line=3.5, accidental=Accidental.SHARP)
 
-    F_FLAT_5 = Note(name="F_FLAT_5", midi_number=67, fingerings={
+    F_FLAT_5 = Note(name="F_FLAT_5", midi_number=67, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_2)
-    }, ledger_line=4.0, accidental=Accidental.FLAT)
-    F_5 = Note(name="F_5", midi_number=68, fingerings={
+    ], ledger_line=4.0, accidental=Accidental.FLAT)
+    F_5 = Note(name="F_5", midi_number=68, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1)
-    }, ledger_line=4.0)
-    F_SHARP_5 = Note(name="F_SHARP_5", midi_number=69, fingerings={
+    ], ledger_line=4.0)
+    F_SHARP_5 = Note(name="F_SHARP_5", midi_number=69, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_2),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_F_SHARP)
-    }, ledger_line=4.0, accidental=Accidental.SHARP)
+    ], ledger_line=4.0, accidental=Accidental.SHARP)
 
-    G_FLAT_5 = Note(name="G_FLAT_5", midi_number=69, fingerings={
+    G_FLAT_5 = Note(name="G_FLAT_5", midi_number=69, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_2),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.R_1, Buttons.R_F_SHARP)
-    }, ledger_line=4.5, accidental=Accidental.FLAT)
-    G_5 = Note(name="G_5", midi_number=70, fingerings={
+    ], ledger_line=4.5, accidental=Accidental.FLAT)
+    G_5 = Note(name="G_5", midi_number=70, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3)
-    }, ledger_line=4.5)
-    G_SHARP_5 = Note(name="G_SHARP_5", midi_number=71, fingerings={
+    ], ledger_line=4.5)
+    G_SHARP_5 = Note(name="G_SHARP_5", midi_number=71, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.L_G_SHARP)
-    }, ledger_line=4.5, accidental=Accidental.SHARP)
+    ], ledger_line=4.5, accidental=Accidental.SHARP)
 
-    A_FLAT_5 = Note(name="A_FLAT_5", midi_number=71, fingerings={
+    A_FLAT_5 = Note(name="A_FLAT_5", midi_number=71, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.L_3, Buttons.L_G_SHARP)
-    }, ledger_line=5.0, accidental=Accidental.FLAT)
-    A_5 = Note(name="A_5", midi_number=72, fingerings={
+    ], ledger_line=5.0, accidental=Accidental.FLAT)
+    A_5 = Note(name="A_5", midi_number=72, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2)
-    }, ledger_line=5.0)
-    A_SHARP_5 = Note(name="A_SHARP_5", midi_number=73, fingerings={
+    ], ledger_line=5.0)
+    A_SHARP_5 = Note(name="A_SHARP_5", midi_number=73, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_1),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_2),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_B_FLAT),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
-    }, ledger_line=5.0, accidental=Accidental.SHARP)
+    ], ledger_line=5.0, accidental=Accidental.SHARP)
 
-    B_FLAT_5 = Note(name="B_FLAT_5", midi_number=73, fingerings={
+    B_FLAT_5 = Note(name="B_FLAT_5", midi_number=73, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_1),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_2),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_B_FLAT),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.L_2, Buttons.R_B_FLAT),
-    }, ledger_line=5.5, accidental=Accidental.FLAT)
-    B_5 = Note(name="B_5", midi_number=74, fingerings={
+    ], ledger_line=5.5, accidental=Accidental.FLAT)
+    B_5 = Note(name="B_5", midi_number=74, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1)
-    }, ledger_line=5.5)
-    B_SHARP_5 = Note(name="B_SHARP_5", midi_number=75, fingerings={
+    ], ledger_line=5.5)
+    B_SHARP_5 = Note(name="B_SHARP_5", midi_number=75, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_2),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_C)
-    }, ledger_line=5.5, accidental=Accidental.SHARP)
+    ], ledger_line=5.5, accidental=Accidental.SHARP)
 
-    C_FLAT_6 = Note(name="C_FLAT_6", midi_number=74, fingerings={
+    C_FLAT_6 = Note(name="C_FLAT_6", midi_number=74, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_1)
-    }, ledger_line=6.0, accidental=Accidental.FLAT)
-    C_6 = Note(name="C_6", midi_number=75, fingerings={
+    ], ledger_line=6.0, accidental=Accidental.FLAT)
+    C_6 = Note(name="C_6", midi_number=75, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_2),
         (Buttons.L_OCTAVE, Buttons.L_1, Buttons.R_C)
-    }, ledger_line=6.0)
-    C_SHARP_6 = Note(name="C_SHARP_6", midi_number=76, fingerings={
+    ], ledger_line=6.0)
+    C_SHARP_6 = Note(name="C_SHARP_6", midi_number=76, fingerings=[
         (Buttons.L_OCTAVE,)
-    }, ledger_line=6.0, accidental=Accidental.SHARP)
+    ], ledger_line=6.0, accidental=Accidental.SHARP)
 
-    D_FLAT_6 = Note(name="D_FLAT_6", midi_number=76, fingerings={
+    D_FLAT_6 = Note(name="D_FLAT_6", midi_number=76, fingerings=[
         (Buttons.L_OCTAVE,)
-    }, ledger_line=6.5, accidental=Accidental.FLAT)
-    D_6 = Note(name="D_6", midi_number=77, fingerings={
+    ], ledger_line=6.5, accidental=Accidental.FLAT)
+    D_6 = Note(name="D_6", midi_number=77, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_D)
-    }, ledger_line=6.5)
-    D_SHARP_6 = Note(name="D_SHARP_6", midi_number=78, fingerings={
+    ], ledger_line=6.5)
+    D_SHARP_6 = Note(name="D_SHARP_6", midi_number=78, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT)
-    }, ledger_line=6.5, accidental=Accidental.SHARP)
+    ], ledger_line=6.5, accidental=Accidental.SHARP)
 
-    E_FLAT_6 = Note(name="E_FLAT_6", midi_number=78, fingerings={
+    E_FLAT_6 = Note(name="E_FLAT_6", midi_number=78, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT)
-    }, ledger_line=7.0, accidental=Accidental.FLAT)
-    E_6 = Note(name="E_6", midi_number=79, fingerings={
+    ], ledger_line=7.0, accidental=Accidental.FLAT)
+    E_6 = Note(name="E_6", midi_number=79, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT, Buttons.R_E),
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_3, Buttons.L_FRONT_F)
-    }, ledger_line=7.0)
-    E_SHARP_6 = Note(name="E_SHARP_6", midi_number=80, fingerings={
+    ], ledger_line=7.0)
+    E_SHARP_6 = Note(name="E_SHARP_6", midi_number=80, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F),
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT, Buttons.L_F, Buttons.R_E),
-    }, ledger_line=7.0, accidental=Accidental.SHARP)
+    ], ledger_line=7.0, accidental=Accidental.SHARP)
 
-    F_FLAT_6 = Note(name="F_FLAT_6", midi_number=79, fingerings={
+    F_FLAT_6 = Note(name="F_FLAT_6", midi_number=79, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT, Buttons.R_E),
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_3, Buttons.L_FRONT_F)
-    }, ledger_line=7.5, accidental=Accidental.FLAT)
-    F_6 = Note(name="F_6", midi_number=80, fingerings={
+    ], ledger_line=7.5, accidental=Accidental.FLAT)
+    F_6 = Note(name="F_6", midi_number=80, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F),
         (Buttons.L_OCTAVE, Buttons.L_D, Buttons.L_E_FLAT, Buttons.L_F, Buttons.R_E),
-    }, ledger_line=7.5)
-    F_SHARP_6 = Note(name="F_SHARP_6", midi_number=81, fingerings={
+    ], ledger_line=7.5)
+    F_SHARP_6 = Note(name="F_SHARP_6", midi_number=81, fingerings=[
         (Buttons.L_OCTAVE, Buttons.L_2, Buttons.L_FRONT_F, Buttons.R_HIGH_F_SHARP)
-    }, ledger_line=7.5, accidental=Accidental.SHARP)
+    ], ledger_line=7.5, accidental=Accidental.SHARP)
 
     # ALL includes every enharmonic variant — used for MIDI-number-based lookups.
     ALL = (B_FLAT_3, B_3, B_SHARP_3,
